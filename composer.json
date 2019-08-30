@@ -1,0 +1,15 @@
+{
+    "name": "memed/soluti-sdk-php",
+    "description": "SDK for Soluti's digital signature",
+    "keywords": ["soluti", "sdk", "digital signature"],
+    "license": "MIT",
+    "type": "project",
+    "require": {
+        "php": ">=7.2"
+    },
+    "autoload": {
+        "psr-4": {
+            "Memed\\Soluti\\": "src/Memed/Soluti"
+        }
+    }
+}
