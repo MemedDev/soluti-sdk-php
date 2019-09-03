@@ -35,7 +35,7 @@ class Receiver
             $documentSet = $this->parseReponse($this->request($token));
             $attemps++;
             sleep($delay);
-        } while ($documentSet->isWaiting() && $attemps <= $maxAttempts);
+        } while ($documentSet->isWaiting() && $attemps < $maxAttempts);
 
         return $documentSet;
     }

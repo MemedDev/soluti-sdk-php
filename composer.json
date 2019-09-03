@@ -16,5 +16,10 @@
         "psr-4": {
             "Memed\\Soluti\\": "src/Memed/Soluti"
         }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Memed\\Soluti\\": "tests/Memed/Soluti"
+        }
     }
 }

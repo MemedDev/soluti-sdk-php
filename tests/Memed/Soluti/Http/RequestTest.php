@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Memed\Soluti\Http;
 
-use PHPUnit\Framework\TestCase as TestCase;
+use Memed\Soluti\TestCase;
 
 class RequestTest extends TestCase
 {

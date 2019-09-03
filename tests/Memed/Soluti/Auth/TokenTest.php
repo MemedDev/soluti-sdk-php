@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Memed\Soluti\Auth;
 
-use PHPUnit\Framework\TestCase as TestCase;
+use Memed\Soluti\TestCase;
 
 class TokenTest extends TestCase
 {

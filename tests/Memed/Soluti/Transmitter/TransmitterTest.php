@@ -11,7 +11,7 @@ use Memed\Soluti\Http\Client;
 use Memed\Soluti\Http\Request;
 use Memed\Soluti\Transmitter\Token as TransactionToken;
 use Mockery as m;
-use PHPUnit\Framework\TestCase;
+use Memed\Soluti\TestCase;
 
 class TransmitterTest extends TestCase
 {

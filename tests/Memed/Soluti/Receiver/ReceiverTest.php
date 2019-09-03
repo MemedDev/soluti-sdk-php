@@ -9,7 +9,7 @@ use Memed\Soluti\Http\Client;
 use Memed\Soluti\Http\Request;
 use Memed\Soluti\Transmitter\Token;
 use Mockery as m;
-use PHPUnit\Framework\TestCase as TestCase;
+use Memed\Soluti\TestCase;
 
 class ReceiverTest extends TestCase
 {

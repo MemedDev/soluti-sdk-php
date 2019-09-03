@@ -9,7 +9,7 @@ use Memed\Soluti\Http\Request;
 use Memed\Soluti\Receiver\Document;
 use Memed\Soluti\Receiver\DocumentSet;
 use Mockery as m;
-use PHPUnit\Framework\TestCase as TestCase;
+use Memed\Soluti\TestCase;
 
 class DownloaderTest extends TestCase
 {

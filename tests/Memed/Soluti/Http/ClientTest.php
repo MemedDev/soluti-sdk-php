@@ -7,7 +7,7 @@ namespace Memed\Soluti\Http;
 use GuzzleHttp\Client as GuzzleClient;
 use GuzzleHttp\Psr7\Response;
 use Mockery as m;
-use PHPUnit\Framework\TestCase as TestCase;
+use Memed\Soluti\TestCase;
 
 class ClientTest extends TestCase
 {
