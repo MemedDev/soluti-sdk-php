@@ -17,28 +17,12 @@ class Token implements AuthStrategy
     protected $type;
 
     /**
-     * @var int
-     */
-    protected $expires_in;
-
-    /**
-     * @var string
-     */
-    protected $scope;
-
-    /**
      * Constructor.
      */
-    public function __construct(
-        string $token,
-        string $type,
-        int $expires_in,
-        string $scope
-    ) {
+    public function __construct(string $token, string $type)
+    {
         $this->token = $token;
         $this->type = $type;
-        $this->expires_in = $expires_in;
-        $this->scope = $scope;
     }
 
     /**
@@ -55,22 +39,6 @@ class Token implements AuthStrategy
     public function type(): string
     {
         return $this->type;
-    }
-
-    /**
-     * Retrieves expires_in time.
-     */
-    public function expiresIn(): int
-    {
-        return $this->expires_in;
-    }
-
-    /**
-     * Retrieves scope of token.
-     */
-    public function scope(): string
-    {
-        return $this->scope;
     }
 
     /**
