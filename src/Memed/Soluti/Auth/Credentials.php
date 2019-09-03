@@ -7,8 +7,13 @@ namespace Memed\Soluti\Auth;
 /**
  * This class is a simple DTO to handle user's credentials.
  */
-class Credentials
+class Credentials implements AuthStrategy
 {
+    /**
+     * @var Client
+     */
+    protected $client;
+
     /**
      * @var string
      */
@@ -20,12 +25,32 @@ class Credentials
     protected $password;
 
     /**
+     * @var int
+     */
+    protected $ttl;
+
+    /**
      * Constructor.
      */
-    public function __construct(string $username, string $password)
-    {
+    public function __construct(
+        Client $client,
+        string $username,
+        string $password,
+        int $ttl
+    ) {
+        $this->client = $client;
         $this->username = $username;
         $this->password = $password;
+        $this->ttl = $ttl;
+    }
+
+    /**
+     * Retrieves client.
+     * @return [type] [description]
+     */
+    public function client(): Client
+    {
+        return $this->client;
     }
 
     /**
@@ -42,5 +67,13 @@ class Credentials
     public function password(): string
     {
         return $this->password;
+    }
+
+    /**
+     * Retrieves time (in seconds) that credentials will be valid.
+     */
+    public function ttl(): int
+    {
+        return $this->ttl;
     }
 }

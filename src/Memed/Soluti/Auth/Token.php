@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Memed\Soluti\Auth;
 
-class Token
+class Token implements AuthStrategy
 {
     /**
      * @var string
