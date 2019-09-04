@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace Memed\Soluti\Receiver;
 
+use Memed\Soluti\Config;
 use Memed\Soluti\Http\Client;
 use Memed\Soluti\Http\Request;
+use Memed\Soluti\Manager;
 use Memed\Soluti\Receiver\Document;
 use Memed\Soluti\Receiver\DocumentSet;
-use Mockery as m;
 use Memed\Soluti\TestCase;
+use Mockery as m;
 
 class DownloaderTest extends TestCase
 {
     public function testDownloadShouldProcessAllDocumentsInADocumentSet()
     {
         $client = m::mock(Client::class);
-        $downloader = new Downloader($client);
+        $manager = new Manager(m::mock(Config::class), $client);
+        $downloader = new Downloader($manager);
         $destination = 'destination/dir/';
 
         $documentSet = new DocumentSet([

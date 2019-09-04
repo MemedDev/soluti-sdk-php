@@ -5,18 +5,21 @@ declare(strict_types=1);
 namespace Memed\Soluti\Receiver;
 
 use GuzzleHttp\Psr7\Response;
+use Memed\Soluti\Config;
 use Memed\Soluti\Http\Client;
 use Memed\Soluti\Http\Request;
+use Memed\Soluti\Manager;
+use Memed\Soluti\TestCase;
 use Memed\Soluti\Transmitter\Token;
 use Mockery as m;
-use Memed\Soluti\TestCase;
 
 class ReceiverTest extends TestCase
 {
     public function testGetDocumentsShouldReturnSignedDocumentSetOnTheFirstAttempt()
     {
         $client = m::mock(Client::class);
-        $receiver = new Receiver($client);
+        $manager = new Manager(m::mock(Config::class), $client);
+        $receiver = new Receiver($manager);
         $token = new Token('some-token', 'some-alias');
         $response = m::mock(Response::class);
 
@@ -49,7 +52,8 @@ class ReceiverTest extends TestCase
     public function testGetDocumentsShouldReturnSignedDocumentSetOnTheLastAttempt()
     {
         $client = m::mock(Client::class);
-        $receiver = new Receiver($client);
+        $manager = new Manager(m::mock(Config::class), $client);
+        $receiver = new Receiver($manager);
         $token = new Token('some-token', 'some-alias');
         $waitingResponse = m::mock(Response::class);
         $successResponse = m::mock(Response::class);
@@ -100,7 +104,8 @@ class ReceiverTest extends TestCase
     public function testGetDocumentsShouldReturnWaitingDocumentSetAfterAllAttempts()
     {
         $client = m::mock(Client::class);
-        $receiver = new Receiver($client);
+        $manager = new Manager(m::mock(Config::class), $client);
+        $receiver = new Receiver($manager);
         $token = new Token('some-token', 'some-alias');
         $response = m::mock(Response::class);
 

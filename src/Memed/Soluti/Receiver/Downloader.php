@@ -4,23 +4,23 @@ declare(strict_types=1);
 
 namespace Memed\Soluti\Receiver;
 
-use Memed\Soluti\Http\Client;
 use Memed\Soluti\Http\Request;
+use Memed\Soluti\Manager;
 use Memed\Soluti\Receiver\DocumentSet;
 
 class Downloader
 {
     /**
-     * @var Client
+     * @var Manager
      */
-    protected $client;
+    protected $manager;
 
     /**
      * Constructor.
      */
-    public function __construct(Client $client)
+    public function __construct(Manager $manager)
     {
-        $this->client = $client;
+        $this->manager = $manager;
     }
 
     /**
@@ -32,7 +32,7 @@ class Downloader
         return array_map(function (Document $document) use ($destinationDir) {
             $destination = $destinationDir . $document->name();
 
-            $this->client->download(
+            $this->manager->client()->download(
                 new Request('get', $document->location()),
                 $destination
             );

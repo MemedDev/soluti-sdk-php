@@ -5,8 +5,10 @@ declare(strict_types=1);
 namespace Memed\Soluti\Auth;
 
 use GuzzleHttp\Psr7\Response;
+use Memed\Soluti\Config;
 use Memed\Soluti\Http\Client as HttpClient;
 use Memed\Soluti\Http\Request;
+use Memed\Soluti\Manager;
 use Memed\Soluti\TestCase;
 use Mockery as m;
 
@@ -39,7 +41,8 @@ class SessionTest extends TestCase
         ]);
 
         $client = m::mock(HttpClient::class);
-        $session = new Session($client);
+        $manager = new Manager(m::mock(Config::class), $client);
+        $session = new Session($manager);
         $response = m::mock(Response::class);
 
         $client->shouldReceive('json')

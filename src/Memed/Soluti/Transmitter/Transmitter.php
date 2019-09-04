@@ -7,17 +7,22 @@ namespace Memed\Soluti\Transmitter;
 use GuzzleHttp\Psr7\Response;
 use Memed\Soluti\Auth\Token as AuthToken;
 use Memed\Soluti\Document;
-use Memed\Soluti\Http\Client;
 use Memed\Soluti\Http\Request;
+use Memed\Soluti\Manager;
 
 class Transmitter
 {
     /**
+     * @var Manager
+     */
+    protected $manager;
+
+    /**
      * Constructor.
      */
-    public function __construct(Client $client)
+    public function __construct(Manager $manager)
     {
-        $this->client = $client;
+        $this->manager = $manager;
     }
 
     /**
@@ -27,7 +32,7 @@ class Transmitter
     {
         $transactionToken = $this->start($authToken);
 
-        $this->client->multipart(new Request(
+        $this->manager->client()->multipart(new Request(
             'post',
             "http://cess:8080/file-transfer/{$transactionToken}/eot",
             [
@@ -47,7 +52,7 @@ class Transmitter
      */
     protected function start(AuthToken $token)
     {
-        return $this->parseReponse($this->client->json(
+        return $this->parseReponse($this->manager->client()->json(
             new Request(
                 'post',
                 'http://cess:8080/signature-service',

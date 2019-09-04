@@ -6,19 +6,22 @@ namespace Memed\Soluti\Transmitter;
 
 use GuzzleHttp\Psr7\Response;
 use Memed\Soluti\Auth\Token as AuthToken;
+use Memed\Soluti\Config;
 use Memed\Soluti\Document;
 use Memed\Soluti\Http\Client;
 use Memed\Soluti\Http\Request;
+use Memed\Soluti\Manager;
+use Memed\Soluti\TestCase;
 use Memed\Soluti\Transmitter\Token as TransactionToken;
 use Mockery as m;
-use Memed\Soluti\TestCase;
 
 class TransmitterTest extends TestCase
 {
     public function testTransmitShouldSendAFileUsingClient()
     {
         $client = m::mock(Client::class);
-        $transmitter = new Transmitter($client);
+        $manager = new Manager(m::mock(Config::class), $client);
+        $transmitter = new Transmitter($manager);
         $authToken = new AuthToken('auth-token', 'bearer', 30, 'scope');
         $transactionToken = new TransactionToken('transaction-token');
         $transactionResponse = m::mock(Response::class);

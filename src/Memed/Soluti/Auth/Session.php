@@ -5,8 +5,8 @@ declare(strict_types=1);
 namespace Memed\Soluti\Auth;
 
 use GuzzleHttp\Psr7\Response;
-use Memed\Soluti\Http\Client as HttpClient;
 use Memed\Soluti\Http\Request;
+use Memed\Soluti\Manager;
 
 /**
  * This class is responsible for handling session on Soluti's service.
@@ -14,16 +14,16 @@ use Memed\Soluti\Http\Request;
 class Session
 {
     /**
-     * @var Client
+     * @var Manager
      */
-    protected $client;
+    protected $manager;
 
     /**
      * Constructor.
      */
-    public function __construct(HttpClient $client)
+    public function __construct(Manager $manager)
     {
-        $this->client = $client;
+        $this->manager = $manager;
     }
 
     /**
@@ -45,7 +45,7 @@ class Session
             ]
         );
 
-        return $this->parseResponse($this->client->json($request));
+        return $this->parseResponse($this->manager->client()->json($request));
     }
 
     /**

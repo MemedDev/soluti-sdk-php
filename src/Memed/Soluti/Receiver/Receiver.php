@@ -5,23 +5,23 @@ declare(strict_types=1);
 namespace Memed\Soluti\Receiver;
 
 use GuzzleHttp\Psr7\Response;
-use Memed\Soluti\Http\Client;
 use Memed\Soluti\Http\Request;
+use Memed\Soluti\Manager;
 use Memed\Soluti\Transmitter\Token;
 
 class Receiver
 {
     /**
-     * @var Client
+     * @var Manager
      */
-    protected $client;
+    protected $manager;
 
     /**
      * Constructor.
      */
-    public function __construct(Client $client)
+    public function __construct(Manager $manager)
     {
-        $this->client = $client;
+        $this->manager = $manager;
     }
 
     /**
@@ -45,7 +45,7 @@ class Receiver
      */
     protected function request(Token $token): Response
     {
-        return $this->client->get(
+        return $this->manager->client()->get(
             new Request(
                 'get',
                 'http://cess:8080/signature-service/'.(string) $token
