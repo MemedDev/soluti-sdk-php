@@ -16,6 +16,7 @@ class SessionTest extends TestCase
 {
     public function testCreateShouldStartANewSessionAndGeneratAnAuthToken()
     {
+        $vaultIdUrl = 'http://vaultid';
         $credentials = new Credentials(
             new Client('12345', 'client-secret'),
             'username',
@@ -41,7 +42,10 @@ class SessionTest extends TestCase
         ]);
 
         $client = m::mock(HttpClient::class);
-        $manager = new Manager(m::mock(Config::class), $client);
+        $manager = new Manager(
+            new Config(['url_vaultid' => $vaultIdUrl]),
+            $client
+        );
         $session = new Session($manager);
         $response = m::mock(Response::class);
 
@@ -49,7 +53,7 @@ class SessionTest extends TestCase
             ->with(m::on(function (Request $request) use ($requestBody) {
                 return (
                     $request->getMethod() === 'POST' &&
-                    (string) $request->getUri() === 'https://apicloudid.hom.vaultid.com.br/oauth' &&
+                    (string) $request->getUri() === 'http://vaultid/oauth' &&
                     $request->getData() === $requestBody
                 );
             }))

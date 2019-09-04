@@ -48,7 +48,7 @@ class Receiver
         return $this->manager->client()->get(
             new Request(
                 'get',
-                'http://cess:8080/signature-service/'.(string) $token
+                $this->manager->cessUrl('/signature-service/'.(string) $token)
             )
         );
     }

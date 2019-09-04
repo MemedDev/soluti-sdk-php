@@ -19,8 +19,9 @@ class TransmitterTest extends TestCase
 {
     public function testTransmitShouldSendAFileUsingClient()
     {
+        $cessUrl = 'http://cess';
         $client = m::mock(Client::class);
-        $manager = new Manager(m::mock(Config::class), $client);
+        $manager = new Manager(new Config(['url_cess' => $cessUrl]), $client);
         $transmitter = new Transmitter($manager);
         $authToken = new AuthToken('auth-token', 'bearer', 30, 'scope');
         $transactionToken = new TransactionToken('transaction-token');
@@ -54,7 +55,7 @@ class TransmitterTest extends TestCase
             ->with(m::on(function (Request $request) use ($authData, $authToken) {
                 return (
                     $request->getMethod() === 'POST' &&
-                    (string) $request->getUri() === 'http://cess:8080/signature-service' &&
+                    (string) $request->getUri() === 'http://cess/signature-service' &&
                     $request->getData() === $authData &&
                     $request->getHeader('Authorization') === [(string) $authToken]
                 );
@@ -72,7 +73,7 @@ class TransmitterTest extends TestCase
             ->with(m::on(function (Request $request) use ($transactionToken, $uploadData) {
                 return (
                     $request->getMethod() === 'POST' &&
-                    "http://cess:8080/file-transfer/{$transactionToken}/eot" &&
+                    "http://cess/file-transfer/{$transactionToken}/eot" &&
                     $request->getData() === $uploadData
                 );
             }))

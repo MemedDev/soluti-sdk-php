@@ -34,7 +34,7 @@ class Transmitter
 
         $this->manager->client()->multipart(new Request(
             'post',
-            "http://cess:8080/file-transfer/{$transactionToken}/eot",
+            $this->manager->cessUrl("/file-transfer/{$transactionToken}/eot"),
             [
                 [
                     'name' => 'document[0]',
@@ -55,7 +55,7 @@ class Transmitter
         return $this->parseReponse($this->manager->client()->json(
             new Request(
                 'post',
-                'http://cess:8080/signature-service',
+                $this->manager->cessUrl('/signature-service'),
                 [
                     'certificate_alias' => '',
                     'type' => 'PDFSignature',

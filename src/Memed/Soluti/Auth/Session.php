@@ -33,7 +33,7 @@ class Session
     {
         $request = new Request(
             'post',
-            'https://apicloudid.hom.vaultid.com.br/oauth',
+            $this->manager->vaultIdUrl('/oauth'),
             [
                 'client_id' => $credentials->client()->id(),
                 'client_secret' => $credentials->client()->secret(),

@@ -17,8 +17,9 @@ class ReceiverTest extends TestCase
 {
     public function testGetDocumentsShouldReturnSignedDocumentSetOnTheFirstAttempt()
     {
+        $cessUrl = 'http://cess';
         $client = m::mock(Client::class);
-        $manager = new Manager(m::mock(Config::class), $client);
+        $manager = new Manager(new Config(['url_cess' => $cessUrl]), $client);
         $receiver = new Receiver($manager);
         $token = new Token('some-token', 'some-alias');
         $response = m::mock(Response::class);
@@ -32,7 +33,7 @@ class ReceiverTest extends TestCase
 
         $client->shouldReceive('get')
             ->with(m::on(function (Request $request) {
-                return (string) $request->getUri() === 'http://cess:8080/signature-service/some-token';
+                return (string) $request->getUri() === 'http://cess/signature-service/some-token';
             }))
             ->once()
             ->andReturn($response);
@@ -46,13 +47,14 @@ class ReceiverTest extends TestCase
             new Document('SIGNED', 'location/document/1'),
         ]);
 
-        $this->assertEquals($expected, $receiver->getDocuments($token));
+        $this->assertEquals($expected, $receiver->getDocuments($token, 5, 0));
     }
 
     public function testGetDocumentsShouldReturnSignedDocumentSetOnTheLastAttempt()
     {
+        $cessUrl = 'http://cess';
         $client = m::mock(Client::class);
-        $manager = new Manager(m::mock(Config::class), $client);
+        $manager = new Manager(new Config(['url_cess' => $cessUrl]), $client);
         $receiver = new Receiver($manager);
         $token = new Token('some-token', 'some-alias');
         $waitingResponse = m::mock(Response::class);
@@ -74,7 +76,7 @@ class ReceiverTest extends TestCase
 
         $client->shouldReceive('get')
             ->with(m::on(function (Request $request) {
-                return (string) $request->getUri() === 'http://cess:8080/signature-service/some-token';
+                return (string) $request->getUri() === 'http://cess/signature-service/some-token';
             }))
             ->times(5)
             ->andReturn(
@@ -103,8 +105,9 @@ class ReceiverTest extends TestCase
 
     public function testGetDocumentsShouldReturnWaitingDocumentSetAfterAllAttempts()
     {
+        $cessUrl = 'http://cess';
         $client = m::mock(Client::class);
-        $manager = new Manager(m::mock(Config::class), $client);
+        $manager = new Manager(new Config(['url_cess' => $cessUrl]), $client);
         $receiver = new Receiver($manager);
         $token = new Token('some-token', 'some-alias');
         $response = m::mock(Response::class);
@@ -118,7 +121,7 @@ class ReceiverTest extends TestCase
 
         $client->shouldReceive('get')
             ->with(m::on(function (Request $request) {
-                return (string) $request->getUri() === 'http://cess:8080/signature-service/some-token';
+                return (string) $request->getUri() === 'http://cess/signature-service/some-token';
             }))
             ->times(3)
             ->andReturn($response);
