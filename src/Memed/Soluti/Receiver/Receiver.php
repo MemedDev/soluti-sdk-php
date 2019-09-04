@@ -29,7 +29,7 @@ class Receiver
      * attempts to get these documents sometimes because signature service
      * may have a delay to sign them.
      */
-    public function getDocuments(Token $token, int $maxAttempts = 5, int $delay = 0): DocumentSet
+    public function getDocuments(Token $token, int $maxAttempts = 5, int $delay = 1): DocumentSet
     {
         do {
             $documentSet = $this->parseReponse($this->request($token));
