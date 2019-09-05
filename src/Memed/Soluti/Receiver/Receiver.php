@@ -63,7 +63,7 @@ class Receiver
         $body = json_decode((string) $response->getBody(), true);
 
         $documents = array_map(function (array $document) {
-            return new Document($document['status'], $document['result']);
+            return new Document($document['status'], $document['result'] ?? '');
         }, $body['documents']);
 
         return new DocumentSet($documents);
