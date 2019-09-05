@@ -31,11 +31,13 @@ class Receiver
      */
     public function getDocuments(Token $token, int $maxAttempts = 5, int $delay = 1): DocumentSet
     {
+        $attempts = 0;
+
         do {
             $documentSet = $this->parseReponse($this->request($token));
-            $attemps++;
+            $attempts++;
             sleep($delay);
-        } while ($documentSet->isWaiting() && $attemps < $maxAttempts);
+        } while ($documentSet->isWaiting() && $attempts < $maxAttempts);
 
         return $documentSet;
     }
