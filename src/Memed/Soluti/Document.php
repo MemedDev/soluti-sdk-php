@@ -45,7 +45,9 @@ class Document
      */
     protected function parseFile(string $path): void
     {
-        $this->filename = end(explode('/', $path));
+        $name = explode('/', $path);
+
+        $this->filename = end($name);
         $this->file = fopen($path, 'r');
     }
 }
