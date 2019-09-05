@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Memed\Soluti;
 
+use GuzzleHttp\Client as GuzzleClient;
 use Memed\Soluti\Auth\Session;
 use Memed\Soluti\Http\Client;
 use Memed\Soluti\Receiver\Downloader;
@@ -13,18 +14,48 @@ use Memed\Soluti\Transmitter\Transmitter;
 class Manager
 {
     /**
+     * @var Config
+     */
+    protected $config;
+
+    /**
+     * @var Client
+     */
+    protected $client;
+
+    /**
+     * @var Transmitter
+     */
+    protected $transmitter;
+
+    /**
+     * @var Receiver
+     */
+    protected $receiver;
+
+    /**
+     * @var Downloader
+     */
+    protected $downloader;
+
+    /**
+     * @var Session
+     */
+    protected $session;
+
+    /**
      * Constructor.
      */
     public function __construct(
         Config $config,
-        Client $client,
+        Client $client = null,
         Transmitter $transmitter = null,
         Receiver $receiver = null,
         Downloader $downloader = null,
         Session $session = null
     ) {
         $this->config = $config;
-        $this->client = $client;
+        $this->client = $client ?: new Client(new GuzzleClient());
         $this->transmitter = $transmitter ?: new Transmitter($this);
         $this->receiver = $receiver ?: new Receiver($this);
         $this->downloader = $downloader ?: new Downloader($this);
