@@ -46,7 +46,6 @@ class Credentials implements AuthStrategy
 
     /**
      * Retrieves client.
-     * @return [type] [description]
      */
     public function client(): Client
     {
