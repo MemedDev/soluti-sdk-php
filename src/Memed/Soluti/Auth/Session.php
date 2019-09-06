@@ -55,11 +55,6 @@ class Session
     {
         $body = json_decode((string) $response->getBody(), true);
 
-        return new Token(
-            $body['access_token'],
-            $body['token_type'],
-            $body['expires_in'],
-            $body['scope']
-        );
+        return new Token($body['access_token'], $body['token_type']);
     }
 }
