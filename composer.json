@@ -3,13 +3,30 @@
     "description": "SDK for Soluti's digital signature",
     "keywords": ["soluti", "sdk", "digital signature"],
     "license": "MIT",
-    "type": "project",
+    "type": "library",
     "require": {
-        "php": ">=7.2"
+        "php": ">=7.2",
+        "guzzlehttp/guzzle": "^6.0"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^8.3",
+        "mockery/mockery": "^1.2"
     },
     "autoload": {
         "psr-4": {
-            "Memed\\Soluti\\": "src/Memed/Soluti"
+            "\\Memed\\Soluti\\": "src/Memed/Soluti"
+        }
+    },
+    "extra": {
+        "extra": {
+            "branch-alias": {
+                "dev-master": "0.1.x-dev"
+            }
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Memed\\Soluti\\": "tests/Memed/Soluti"
         }
     }
 }
