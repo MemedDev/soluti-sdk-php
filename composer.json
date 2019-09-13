@@ -14,7 +14,7 @@
     },
     "autoload": {
         "psr-4": {
-            "\\Memed\\Soluti\\": "src/Memed/Soluti"
+            "Memed\\Soluti\\": "src/Memed/Soluti"
         }
     },
     "extra": {
