@@ -30,12 +30,17 @@ class Credentials implements AuthStrategy
     protected $ttl;
 
     /**
-     * Constructor.
+     * Credentials constructor.
+     *
+     * @param  Client  $client
+     * @param  string|null $username
+     * @param  string|null $password
+     * @param  int  $ttl
      */
     public function __construct(
         Client $client,
-        string $username,
-        string $password,
+        ?string $username,
+        ?string $password,
         int $ttl
     ) {
         $this->client = $client;

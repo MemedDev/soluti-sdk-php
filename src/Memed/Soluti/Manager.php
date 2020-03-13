@@ -117,4 +117,12 @@ class Manager
     {
         return $this->config->vaultIdUrl().$endpoint;
     }
+
+    /**
+     * Retrieves birdid uri plus given endpoint.
+     */
+    public function birdIdUrl(string $endpoint = ''): string
+    {
+        return $this->config->birdIdUrl().$endpoint;
+    }
 }

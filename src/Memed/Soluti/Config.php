@@ -34,4 +34,12 @@ class Config
     {
         return $this->data['url_vaultid'];
     }
+
+    /**
+     * Retrieves url of Bird Id service.
+     */
+    public function birdIdUrl(): ?string
+    {
+        return $this->data['url_birdid'];
+    }
 }

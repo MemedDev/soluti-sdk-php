@@ -9,35 +9,56 @@ class Client
     /**
      * @var string
      */
-    protected $id;
+    protected $birdid_id;
 
     /**
      * @var string
      */
-    protected $secret;
+    protected $birdid_secret;
+
+    /**
+     * @var string
+     */
+    protected $vaultid_id;
+
+    /**
+     * @var string
+     */
+    protected $vaultid_secret;
 
     /**
      * Constructor.
+     *
+     * @param  string  $birdid_id
+     * @param  string  $birdid_secret
+     * @param  string  $vaultid_id
+     * @param  string  $vaultid_secret
      */
-    public function __construct(string $id, string $secret)
+    public function __construct(
+        string $birdid_id,
+        string $birdid_secret,
+        string $vaultid_id,
+        string $vaultid_secret
+    )
     {
-        $this->id = $id;
-        $this->secret = $secret;
+        $this->birdid_id = $birdid_id;
+        $this->birdid_secret = $birdid_secret;
+        $this->vaultid_id = $vaultid_id;
+        $this->vaultid_secret = $vaultid_secret;
     }
 
-    /**
-     * Retrieves client id.
-     */
-    public function id(): string
+    public function id(string $cloud)
     {
-        return $this->id;
+        $attribute = strtolower($cloud) . '_id';
+
+        return $this->{$attribute};
     }
 
-    /**
-     * Retrieves client secret.
-     */
-    public function secret(): string
+    public function secret(string $cloud)
     {
-        return $this->secret;
+        $attribute = strtolower($cloud) . '_secret';
+
+        return $this->{$attribute};
     }
+
 }
