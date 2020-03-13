@@ -6,12 +6,6 @@ namespace Memed\Soluti;
 
 use Memed\Soluti\Auth\AuthStrategy;
 use Memed\Soluti\Auth\Credentials;
-use Memed\Soluti\Auth\Session;
-use Memed\Soluti\Auth\Token;
-use Memed\Soluti\Receiver\DocumentSet;
-use Memed\Soluti\Receiver\Downloader;
-use Memed\Soluti\Receiver\Receiver;
-use Memed\Soluti\Transmitter\Transmitter;
 
 class Signer
 {
