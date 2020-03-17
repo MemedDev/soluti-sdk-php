@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace Memed\Soluti;
 
+use App\Memed\JsonApi\Exception as JsonApiException;
 use Memed\Soluti\Auth\AuthStrategy;
 use Memed\Soluti\Auth\Credentials;
+use Memed\Soluti\Auth\Token;
 
 class Signer
 {
@@ -26,6 +28,10 @@ class Signer
      * Sends given document object to be signed in Soluti service using given
      * strategy.
      *
+     * @param  Document  $document
+     * @param  AuthStrategy  $token
+     * @param  string  $destinationPath
+     * @return array
      * @see Memed\Soluti\Auth\AuthStrategy
      */
     public function sign(
@@ -33,8 +39,10 @@ class Signer
         AuthStrategy $token,
         string $destinationPath
     ): array {
+
         if ($token instanceof Credentials) {
-            $token = $this->manager->session()->create($token);
+            $userDiscovery = $this->manager->session()->userDiscoveryByCredentials($token);
+            $token = $this->manager->session()->create($token, $userDiscovery);
         }
 
         $transactionToken = $this->manager

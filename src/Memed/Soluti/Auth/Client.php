@@ -47,16 +47,21 @@ class Client
         $this->vaultid_secret = $vaultid_secret;
     }
 
+    private function formatCloudName(string $cloud): string
+    {
+        return strtolower(str_replace('_', '', $cloud));
+    }
+
     public function id(string $cloud)
     {
-        $attribute = strtolower($cloud) . '_id';
+        $attribute = $this->formatCloudName($cloud) . '_id';
 
         return $this->{$attribute};
     }
 
     public function secret(string $cloud)
     {
-        $attribute = strtolower($cloud) . '_secret';
+        $attribute = $this->formatCloudName($cloud) . '_secret';
 
         return $this->{$attribute};
     }

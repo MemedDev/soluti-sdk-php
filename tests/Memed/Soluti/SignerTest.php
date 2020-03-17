@@ -7,6 +7,7 @@ namespace Memed\Soluti;
 use Memed\Soluti\Auth\Credentials;
 use Memed\Soluti\Auth\Session;
 use Memed\Soluti\Auth\Token as AuthToken;
+use Memed\Soluti\Auth\UserDiscovery;
 use Memed\Soluti\Http\Client;
 use Memed\Soluti\Receiver\DocumentSet;
 use Memed\Soluti\Receiver\Downloader;
@@ -70,6 +71,7 @@ class SignerTest extends TestCase
         $receiver = m::mock(Receiver::class);
         $downloader = m::mock(Downloader::class);
         $session = m::mock(Session::class);
+        $userDiscovery = m::mock(UserDiscovery::class);
         $manager = new Manager(
             m::mock(Config::class),
             m::mock(Client::class),
@@ -93,9 +95,14 @@ class SignerTest extends TestCase
         ];
 
         $session->shouldReceive('create')
-            ->with($credentials)
+            ->with($credentials, $userDiscovery)
             ->once()
             ->andReturn($authToken);
+
+        $session->shouldReceive('userDiscoveryByCredentials')
+            ->with($credentials)
+            ->once()
+            ->andReturn($userDiscovery);
 
         $transmitter->shouldReceive('transmit')
             ->with($document, $authToken)
