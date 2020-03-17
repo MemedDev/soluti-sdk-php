@@ -39,8 +39,8 @@ class Credentials implements AuthStrategy
      */
     public function __construct(
         Client $client,
-        ?string $username,
-        ?string $password,
+        string $username,
+        string $password,
         int $ttl
     ) {
         $this->client = $client;
