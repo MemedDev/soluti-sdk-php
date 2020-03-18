@@ -70,10 +70,31 @@ class Session
             $response = $this->manager->client()->json($request);
             $body = json_decode((string) $response->getBody(), true);
 
-            return new ApplicationToken($body['access_token'], $body['token_type']);
+            return new ApplicationToken($body['access_token'], $body['token_type'], $cloud);
 
         } catch(\Exception $e) {
             throw new \Exception($e->getMessage());
+        }
+    }
+
+    /**
+     * Check which in cloud the user has certificate
+     *
+     * @param  CloudAuthentication  $cloudAuthentication
+     * @param  string|null  $document
+     * @return UserDiscovery
+     * @throws \Exception
+     */
+    public function userDiscovery(CloudAuthentication $cloudAuthentication, ?string $document = null): UserDiscovery
+    {
+        foreach ($cloudAuthentication->clouds() as $cloud) {
+            $discovery = $this->userDiscoveryRequest($cloud->applicationToken(), $cloud->name(), $document);
+
+            if (! $discovery->hasCertificate()) {
+                continue;
+            }
+
+            return $discovery;
         }
     }
 
