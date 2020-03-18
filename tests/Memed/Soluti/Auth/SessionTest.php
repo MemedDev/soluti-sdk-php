@@ -19,10 +19,13 @@ class SessionTest extends TestCase
     private $vaultIdUrl = 'http://vaultid';
     private $applicationToken;
     private $userToken;
+    private $cloud;
 
     protected function setUp(): void
     {
         parent::setUp();
+
+        $this->cloud = 'VAULT_ID';
 
         $this->credentials = new Credentials(
             new Client(
@@ -44,16 +47,15 @@ class SessionTest extends TestCase
         $this->applicationToken = new ApplicationToken(
             'some-token',
             'some-type',
+            'VAULT_ID'
         );
     }
 
     public function testCreateShouldStartANewSessionAndGenerateAnAuthToken()
     {
-        $cloud = 'vaultId';
-
         $requestBody = [
-            'client_id' => $this->credentials->client()->id($cloud),
-            'client_secret' => $this->credentials->client()->secret($cloud),
+            'client_id' => $this->credentials->client()->id($this->cloud),
+            'client_secret' => $this->credentials->client()->secret($this->cloud),
             'username' => $this->credentials->username(),
             'password' => $this->credentials->password(),
             'grant_type' => 'password',
@@ -127,11 +129,9 @@ class SessionTest extends TestCase
 
     public function testApplicationToken()
     {
-        $cloud = 'vaultId';
-
         $requestBody = [
-            'client_id' => $this->credentials->client()->id($cloud),
-            'client_secret' => $this->credentials->client()->secret($cloud),
+            'client_id' => $this->credentials->client()->id($this->cloud),
+            'client_secret' => $this->credentials->client()->secret($this->cloud),
             'grant_type' => 'client_credentials',
             'lifetime' => $this->credentials->ttl(),
         ];
@@ -173,16 +173,83 @@ class SessionTest extends TestCase
         $expected = new ApplicationToken(
             'some-token',
             'some-type',
-            30
+            'VAULT_ID'
         );
 
-        $this->assertEquals($expected, $session->applicationToken($this->credentials, $cloud));
+        $this->assertEquals($expected, $session->applicationToken($this->credentials, $this->cloud));
+    }
+
+    public function testUserDiscovery()
+    {
+        $client = m::mock(HttpClient::class);
+
+        $manager = new Manager(
+            new Config([
+                'url_vaultid' => $this->vaultIdUrl,
+                'url_birdid' => $this->birdidUrl,
+            ]),
+            $client
+        );
+
+        $clouds = new CloudAuthentication(
+            $this->credentials,
+            [
+                CloudAuthentication::CLOUD_NAME_VAULT_ID => new Cloud(
+                    CloudAuthentication::CLOUD_NAME_VAULT_ID,
+                    $manager->vaultIdUrl(),
+                    $this->applicationToken
+                ),
+                CloudAuthentication::CLOUD_NAME_BIRD_ID => new Cloud(
+                    CloudAuthentication::CLOUD_NAME_BIRD_ID,
+                    $manager->birdIdUrl(),
+                    $this->applicationToken
+                ),
+            ]);
+
+        $userDiscoveryData = [
+            'cloud' => 'VAULT_ID',
+            'name' => 'VAULT ID',
+            'username' => $this->credentials->username(),
+            'date_last_update' => '2020-03-17 18:45:00',
+            'certificates' => [
+                [
+                    'alias' => 'some-certificate',
+                    'certificate' => '-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----',
+                    'issuerDN' => 'some-dn'
+                ]
+            ],
+            'detail' => [
+                'code' => 1109,
+                'status' => 'CERTIFICATES_LISTED',
+                'message' => 'Certificate Listing',
+            ]
+        ];
+
+        $expected = UserDiscovery::create($userDiscoveryData);
+
+        $response = m::mock(Response::class);
+        $response->shouldReceive('getBody')
+            ->once()
+            ->andReturn(json_encode($userDiscoveryData));
+
+        $session = new Session($manager);
+
+        $client->shouldReceive('json')
+            ->with(m::on(function (Request $request) {
+                return (
+                    $request->getMethod() === 'GET' &&
+                    (string) $request->getUri() === 'http://vaultid/user-discovery?document=username'
+                );
+            }))
+            ->once()
+            ->andReturn($response);
+
+        $this->assertEquals($expected, $session->userDiscovery($clouds, $this->credentials->username()));
     }
 
     public function testUserDiscoveryByUserToken()
     {
         $client = m::mock(HttpClient::class);
-        $applicationToken = new ApplicationToken('token', 'bearer');
 
         $manager = new Manager(
             new Config([

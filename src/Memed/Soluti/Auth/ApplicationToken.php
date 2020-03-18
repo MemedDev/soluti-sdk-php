@@ -17,12 +17,21 @@ class ApplicationToken implements AuthStrategy
     protected $type;
 
     /**
+     * @var string
+     */
+    protected $cloud;
+
+    /**
      * Constructor.
      */
-    public function __construct(string $token, string $type)
-    {
+    public function __construct(
+        string $token,
+        string $type,
+        string $cloud
+    ) {
         $this->token = $token;
         $this->type = $type;
+        $this->cloud = $cloud;
     }
 
     /**
@@ -49,5 +58,13 @@ class ApplicationToken implements AuthStrategy
         $type = ucfirst($this->type());
 
         return "{$type} {$this->token()}";
+    }
+
+    /**
+     * Retrieves cloud of token.
+     */
+    public function cloud(): string
+    {
+        return $this->cloud;
     }
 }
