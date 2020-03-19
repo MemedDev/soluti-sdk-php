@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Memed\Soluti;
 
+use Memed\Soluti\Auth\ApplicationToken;
+use Memed\Soluti\Auth\Cloud;
+use Memed\Soluti\Auth\CloudAuthentication;
 use Memed\Soluti\Auth\Credentials;
 use Memed\Soluti\Auth\Session;
 use Memed\Soluti\Auth\Token as AuthToken;
@@ -71,9 +74,24 @@ class SignerTest extends TestCase
         $receiver = m::mock(Receiver::class);
         $downloader = m::mock(Downloader::class);
         $session = m::mock(Session::class);
+        $credentials = new Credentials(
+            new \Memed\Soluti\Auth\Client(
+                '12345',
+                'birdid-secret',
+                '12345',
+                'vaultid-secret',
+            ),
+            'username',
+            'password',
+            60
+        );
         $userDiscovery = m::mock(UserDiscovery::class);
+        $config = m::mock(Config::class);
+        $config->shouldReceive('vaultIdUrl')->andReturn('https://vaultid');
+        $config->shouldReceive('birdIdUrl')->andReturn('https://birdid');
+
         $manager = new Manager(
-            m::mock(Config::class),
+            $config,
             m::mock(Client::class),
             $transmitter,
             $receiver,
@@ -81,11 +99,22 @@ class SignerTest extends TestCase
             $session
         );
 
+        $cloudAuthentication = m::mock(CloudAuthentication::class);
+
+        $session->shouldReceive('cloudAuthentication')
+            ->with($credentials)
+            ->once()
+            ->andReturn($cloudAuthentication);
+
+        $session->shouldReceive('userDiscovery')
+            ->with($cloudAuthentication, 'username')
+            ->once()
+            ->andReturn($userDiscovery);
+
         $document = m::mock(Document::class);
         $authToken = m::mock(AuthToken::class);
         $destination = 'some/destination/directory/';
 
-        $credentials = m::mock(Credentials::class);
         $transactionToken = m::mock(TransactionToken::class);
         $documentSet = m::mock(DocumentSet::class);
         $files = [
@@ -98,11 +127,6 @@ class SignerTest extends TestCase
             ->with($credentials, $userDiscovery)
             ->once()
             ->andReturn($authToken);
-
-        $session->shouldReceive('userDiscoveryByCredentials')
-            ->with($credentials)
-            ->once()
-            ->andReturn($userDiscovery);
 
         $transmitter->shouldReceive('transmit')
             ->with($document, $authToken)

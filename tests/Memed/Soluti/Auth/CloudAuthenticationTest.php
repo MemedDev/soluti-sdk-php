@@ -63,7 +63,10 @@ class CloudAuthenticationTest extends TestCase
     public function testCloudAuthenticationShouldRetrieveSpecificCloud()
     {
         $this->assertNotEmpty($this->cloudAuthentication->cloud(CloudAuthentication::CLOUD_NAME_VAULT_ID));
-        $this->assertEquals($this->cloudsArray, $this->cloudAuthentication->cloud(CloudAuthentication::CLOUD_NAME_VAULT_ID));
+        $this->assertEquals(
+            $this->cloudsArray[CloudAuthentication::CLOUD_NAME_VAULT_ID],
+            $this->cloudAuthentication->cloud(CloudAuthentication::CLOUD_NAME_VAULT_ID)
+        );
     }
 
     public function testCloudAuthenticationShouldHasClouds()
