@@ -42,6 +42,32 @@ class Session
     }
 
     /**
+     * Retrieves CloudAuthentication instance.
+     *
+     * @param  Credentials  $credentials
+     * @return CloudAuthentication
+     * @throws \Exception
+     */
+    public function cloudAuthentication(Credentials $credentials): CloudAuthentication
+    {
+        return new CloudAuthentication(
+            $credentials,
+            [
+                CloudAuthentication::CLOUD_NAME_VAULT_ID => new Cloud(
+                    CloudAuthentication::CLOUD_NAME_VAULT_ID,
+                    $this->manager->vaultIdUrl(),
+                    $this->manager->session()->applicationToken($credentials, CloudAuthentication::CLOUD_NAME_VAULT_ID)
+                ),
+                CloudAuthentication::CLOUD_NAME_BIRD_ID => new Cloud(
+                    CloudAuthentication::CLOUD_NAME_BIRD_ID,
+                    $this->manager->birdIdUrl(),
+                    $this->manager->session()->applicationToken($credentials, CloudAuthentication::CLOUD_NAME_BIRD_ID)
+                ),
+            ]
+        );
+    }
+
+    /**
      * Creates a new application session using given credentials.
      *
      * @param  Credentials  $credentials
