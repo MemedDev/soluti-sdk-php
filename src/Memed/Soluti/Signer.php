@@ -45,10 +45,19 @@ class Signer
         if ($token instanceof Credentials) {
             $credentials = $token;
 
-            $token = $this->manager->session()->create(
-                $credentials,
-                $this->getUserDiscovery($credentials)
-            );
+            $cloudAuthentication = $this->manager
+                ->session()
+                ->cloudAuthentication($credentials);
+
+            if (! $cloudAuthentication->authenticatedCloud()) {
+                throw new \Exception(
+                    "Usuário [{$credentials->username()}] não encontrado na nuvem da Soluti."
+                );
+            }
+
+            $token = $this->manager
+                ->session()
+                ->create($credentials, $cloudAuthentication->authenticatedCloud());
         }
 
         $transactionToken = $this->manager

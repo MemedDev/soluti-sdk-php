@@ -113,7 +113,7 @@ class Manager
     /**
      * Retrieves vaultid uri plus given endpoint.
      */
-    public function vaultIdUrl(string $endpoint = ''): string
+    public function vaultIdUrl(?string $endpoint = ''): string
     {
         return $this->config->vaultIdUrl().$endpoint;
     }
@@ -121,7 +121,7 @@ class Manager
     /**
      * Retrieves birdid uri plus given endpoint.
      */
-    public function birdIdUrl(string $endpoint = ''): string
+    public function birdIdUrl(?string $endpoint = ''): string
     {
         return $this->config->birdIdUrl().$endpoint;
     }

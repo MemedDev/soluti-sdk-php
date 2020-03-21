@@ -10,12 +10,10 @@ use Memed\Soluti\Auth\CloudAuthentication;
 use Memed\Soluti\Auth\Credentials;
 use Memed\Soluti\Auth\Session;
 use Memed\Soluti\Auth\Token as AuthToken;
-use Memed\Soluti\Auth\UserDiscovery;
 use Memed\Soluti\Http\Client;
 use Memed\Soluti\Receiver\DocumentSet;
 use Memed\Soluti\Receiver\Downloader;
 use Memed\Soluti\Receiver\Receiver;
-use Memed\Soluti\TestCase;
 use Memed\Soluti\Transmitter\Token as TransactionToken;
 use Memed\Soluti\Transmitter\Transmitter;
 use Mockery as m;
@@ -85,7 +83,6 @@ class SignerTest extends TestCase
             'password',
             60
         );
-        $userDiscovery = m::mock(UserDiscovery::class);
         $config = m::mock(Config::class);
         $config->shouldReceive('vaultIdUrl')->andReturn('https://vaultid');
         $config->shouldReceive('birdIdUrl')->andReturn('https://birdid');
@@ -99,20 +96,33 @@ class SignerTest extends TestCase
             $session
         );
 
+        $applicationToken = new ApplicationToken(
+            'some-token',
+            'some-type',
+            CloudAuthentication::CLOUD_NAME_BIRD_ID,
+        );
+
+        $cloudMock = m::mock(Cloud::class, [
+            CloudAuthentication::CLOUD_NAME_BIRD_ID,
+            'http://birdid',
+            $applicationToken,
+        ])
+            ->makePartial();
+
         $cloudAuthentication = m::mock(CloudAuthentication::class);
+        $cloudAuthentication->shouldReceive('authenticatedCloud')
+            ->andReturn($cloudMock);
 
         $session->shouldReceive('cloudAuthentication')
             ->with($credentials)
             ->once()
             ->andReturn($cloudAuthentication);
 
-        $session->shouldReceive('userDiscovery')
-            ->with($cloudAuthentication, 'username')
-            ->once()
-            ->andReturn($userDiscovery);
-
         $document = m::mock(Document::class);
-        $authToken = m::mock(AuthToken::class);
+        $authToken = new AuthToken(
+            'some-token',
+            'some-type',
+        );
         $destination = 'some/destination/directory/';
 
         $transactionToken = m::mock(TransactionToken::class);
@@ -124,7 +134,7 @@ class SignerTest extends TestCase
         ];
 
         $session->shouldReceive('create')
-            ->with($credentials, $userDiscovery)
+            ->with($credentials, $cloudMock)
             ->once()
             ->andReturn($authToken);
 
