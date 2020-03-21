@@ -41,6 +41,17 @@ class UserDiscovery
         );
     }
 
+    /**
+     * @return bool
+     */
+    public function exists(): bool
+    {
+        return !empty($this->username);
+    }
+
+    /**
+     * @return bool
+     */
     public function hasCertificate(): bool
     {
         return $this->detail->getStatus() === 'CERTIFICATES_LISTED';

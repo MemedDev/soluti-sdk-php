@@ -7,15 +7,13 @@ namespace Memed\Soluti\Auth;
 use GuzzleHttp\Psr7\Response;
 use Memed\Soluti\Http\Request;
 use Memed\Soluti\Manager;
+use function Stringy\create;
 
 /**
  * This class is responsible for handling session on Soluti's service.
  */
 class Session
 {
-    public const CLOUD_VAULT_ID = 'VAULT_ID';
-    public const CLOUD_BIRD_ID = 'BIRD_ID';
-
     /**
      * @var Manager
      */
@@ -26,8 +24,15 @@ class Session
      */
     protected $discovery;
 
+    protected $cloudNames = [
+        CloudAuthentication::CLOUD_NAME_VAULT_ID => null,
+        CloudAuthentication::CLOUD_NAME_BIRD_ID  => null,
+    ];
+
     /**
      * Constructor.
+     *
+     * @param  Manager  $manager
      */
     public function __construct(Manager $manager)
     {
@@ -36,35 +41,9 @@ class Session
 
     protected function cloudUrl(string $cloud, ?string $endpoint): string
     {
-        return $cloud === self::CLOUD_BIRD_ID
+        return $cloud === CloudAuthentication::CLOUD_NAME_BIRD_ID
             ? $this->manager->birdIdUrl($endpoint)
             : $this->manager->vaultIdUrl($endpoint);
-    }
-
-    /**
-     * Retrieves CloudAuthentication instance.
-     *
-     * @param  Credentials  $credentials
-     * @return CloudAuthentication
-     * @throws \Exception
-     */
-    public function cloudAuthentication(Credentials $credentials): CloudAuthentication
-    {
-        return new CloudAuthentication(
-            $credentials,
-            [
-                CloudAuthentication::CLOUD_NAME_VAULT_ID => new Cloud(
-                    CloudAuthentication::CLOUD_NAME_VAULT_ID,
-                    $this->manager->vaultIdUrl(),
-                    $this->manager->session()->applicationToken($credentials, CloudAuthentication::CLOUD_NAME_VAULT_ID)
-                ),
-                CloudAuthentication::CLOUD_NAME_BIRD_ID => new Cloud(
-                    CloudAuthentication::CLOUD_NAME_BIRD_ID,
-                    $this->manager->birdIdUrl(),
-                    $this->manager->session()->applicationToken($credentials, CloudAuthentication::CLOUD_NAME_BIRD_ID)
-                ),
-            ]
-        );
     }
 
     /**
@@ -104,6 +83,90 @@ class Session
     }
 
     /**
+     * Retrieves CloudAuthentication instance.
+     *
+     * @param  Credentials  $credentials
+     * @return CloudAuthentication
+     * @throws \Exception
+     */
+    public function cloudAuthentication(Credentials $credentials): CloudAuthentication
+    {
+        $payload = [
+            'credentials' => $credentials,
+            'clouds'      => []
+        ];
+
+        foreach ($this->cloudNames as $cloudName => $cloud) {
+            $authenticatedCloud = new Cloud(
+                $cloudName,
+                $this->cloudUrl($cloudName, null),
+                $applicationToken = $this->manager->session()->applicationToken($credentials, $cloudName)
+            );
+
+            $authenticatedCloud->setDiscoveredOauthUser(
+                $this->oauthUserDiscovery($authenticatedCloud, $credentials)
+            );
+
+            if ($authenticatedCloud->discoveredOauthUser()->isValid()) {
+                $payload['clouds'][$cloudName] = $authenticatedCloud;
+
+                return CloudAuthentication::create($payload);
+            }
+        }
+
+        return CloudAuthentication::create($payload);
+    }
+
+    /**
+     * Checks in which cloud the user is registered
+     *
+     * @param  Cloud  $cloud
+     * @param  Credentials  $credentials
+     * @return DiscoveredOauthUser
+     */
+    public function oauthUserDiscovery(Cloud $cloud, Credentials $credentials): DiscoveredOauthUser
+    {
+        return $this->oauthUserDiscoveryRequest(
+            $cloud,
+            $credentials
+        );
+    }
+
+    /**
+     * Send request to check which in cloud the user has certificate
+     *
+     * @param  Cloud  $cloud
+     * @param  Credentials  $credentials
+     * @return DiscoveredOauthUser
+     */
+    private function oauthUserDiscoveryRequest(
+        Cloud $cloud,
+        Credentials $credentials
+    ): DiscoveredOauthUser
+    {
+        $request = new Request(
+            'post',
+            $cloud->url(CloudAuthentication::CLOUD_USER_DISCOVERY_URL),
+            [
+                'client_id'     => $credentials->client()->id($cloud->name()),
+                'client_secret' => $credentials->client()->secret($cloud->name()),
+                'user_cpf_cnpj' => CloudAuthentication::CLOUD_USER_DOCUMENT_TYPE,
+                'val_cpf_cnpj'  => $credentials->username()
+            ],
+            [
+                'Authorization' => (string) $cloud->applicationToken(),
+            ]
+        );
+
+        $response = $this->manager->client()->json($request);
+
+        return DiscoveredOauthUser::create(array_merge(
+            ['cloud' => $cloud->name()],
+            json_decode((string) $response->getBody(), true)
+        ));
+    }
+
+    /**
      * Check which in cloud the user has certificate
      *
      * @param  CloudAuthentication  $cloudAuthentication
@@ -129,18 +192,20 @@ class Session
      *
      * @param  AuthStrategy  $token
      * @param  string|null  $document
-     * @return UserDiscovery
+     * @return UserDiscovery|null
      * @throws \Exception
      */
-    public function userDiscoveryByToken(AuthStrategy $token, ?string $document = null): UserDiscovery
+    public function userDiscoveryByToken(AuthStrategy $token, ?string $document = null): ?UserDiscovery
     {
-        $discovery = $this->userDiscoveryRequest($token, self::CLOUD_VAULT_ID, $document);
+        foreach ($this->cloudNames as $cloudName => $cloud) {
+            $discovery = $this->userDiscoveryRequest($token, $cloudName, $document);
 
-        if (! $discovery->hasCertificate()) {
-            $discovery = $this->userDiscoveryRequest($token, self::CLOUD_BIRD_ID, $document);
+            if ($discovery->hasCertificate()) {
+                return $discovery;
+            }
         }
 
-        return $discovery;
+        return null;
     }
 
     /**
@@ -165,31 +230,28 @@ class Session
         $response = $this->manager->client()->json($request);
 
         return UserDiscovery::create(array_merge(
-            [
-                'cloud' => $cloud,
-            ],
+            ['cloud' => $cloud],
             json_decode((string) $response->getBody(), true)
         ));
     }
 
     /**
-     * Creates a new session using given credentials.
+     * Creates a new session using given credentials and cloud.
      *
      * @param  Credentials  $credentials
-     * @param  UserDiscovery  $userDiscovery
+     * @param  Cloud  $cloud
      * @return Token
-     * @throws \Exception
      */
-    public function create(Credentials $credentials, UserDiscovery $userDiscovery): Token
+    public function create(Credentials $credentials, Cloud $cloud): Token
     {
         $endpoint = '/oauth';
 
         $request = new Request(
             'post',
-            $this->cloudUrl($userDiscovery->getCloud(), $endpoint),
+            $this->cloudUrl($cloud->name(), $endpoint),
             [
-                'client_id' => $credentials->client()->id($userDiscovery->getCloud()),
-                'client_secret' => $credentials->client()->secret($userDiscovery->getCloud()),
+                'client_id' => $credentials->client()->id($cloud->name()),
+                'client_secret' => $credentials->client()->secret($cloud->name()),
                 'username' => $credentials->username(),
                 'password' => $credentials->password(),
                 'grant_type' => 'password',

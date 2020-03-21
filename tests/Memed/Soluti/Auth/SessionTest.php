@@ -19,13 +19,13 @@ class SessionTest extends TestCase
     private $vaultIdUrl = 'http://vaultid';
     private $applicationToken;
     private $userToken;
-    private $cloud;
+    private $cloudMock;
+    private $discoveredOauthUserMock;
+    private $discoveredOauthUserSlotMock;
 
     protected function setUp(): void
     {
         parent::setUp();
-
-        $this->cloud = 'VAULT_ID';
 
         $this->credentials = new Credentials(
             new Client(
@@ -47,15 +47,40 @@ class SessionTest extends TestCase
         $this->applicationToken = new ApplicationToken(
             'some-token',
             'some-type',
-            'VAULT_ID'
+            'BIRD_ID'
         );
+
+        $this->cloudMock = m::mock(Cloud::class, [
+            CloudAuthentication::CLOUD_NAME_BIRD_ID,
+            $this->birdidUrl,
+            $this->applicationToken,
+        ])
+        ->makePartial();
+
+        $this->discoveredOauthUserSlotMock = m::mock(DiscoveredOauthUserSlot::class, [
+            'slot_alias_value',
+            'label_value'
+        ])
+        ->makePartial();
+
+        $this->discoveredOauthUserMock = m::mock(DiscoveredOauthUser::class, [
+            'S',
+            'slots' => [
+                [
+                    'slot_alias' => 'slot_alias_value',
+                    'label' => 'label_value'
+                ]
+            ],
+            CloudAuthentication::CLOUD_NAME_BIRD_ID,
+        ])
+        ->makePartial();
     }
 
     public function testCreateShouldStartANewSessionAndGenerateAnAuthToken()
     {
         $requestBody = [
-            'client_id' => $this->credentials->client()->id($this->cloud),
-            'client_secret' => $this->credentials->client()->secret($this->cloud),
+            'client_id' => $this->credentials->client()->id($this->cloudMock->name()),
+            'client_secret' => $this->credentials->client()->secret($this->cloudMock->name()),
             'username' => $this->credentials->username(),
             'password' => $this->credentials->password(),
             'grant_type' => 'password',
@@ -80,25 +105,6 @@ class SessionTest extends TestCase
             $client
         );
 
-        $userDiscovery = UserDiscovery::create([
-            'cloud' => 'VAULT_ID',
-            'name' => 'VAULT ID',
-            'username' => $this->credentials->username(),
-            'date_last_update' => '2020-03-17 18:45:00',
-            'certificates' => [
-                [
-                    'alias' => 'some-certificate',
-                    'certificate' => '-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----',
-                    'issuerDN' => 'some-dn'
-                ]
-            ],
-            'detail' => [
-                'code' => 1109,
-                'status' => 'CERTIFICATES_LISTED',
-                'message' => 'Certificate Listing',
-            ]
-        ]);
-
         $session = new Session($manager);
         $response = m::mock(Response::class);
 
@@ -106,7 +112,7 @@ class SessionTest extends TestCase
             ->with(m::on(function (Request $request) use ($requestBody) {
                 return (
                     $request->getMethod() === 'POST' &&
-                    (string) $request->getUri() === 'http://vaultid/oauth' &&
+                    (string) $request->getUri() === 'http://birdid/oauth' &&
                     $request->getData() === $requestBody
                 );
             }))
@@ -124,14 +130,14 @@ class SessionTest extends TestCase
             'some-scope'
         );
 
-        $this->assertEquals($expected, $session->create($this->credentials, $userDiscovery));
+        $this->assertEquals($expected, $session->create($this->credentials, $this->cloudMock));
     }
 
     public function testApplicationToken()
     {
         $requestBody = [
-            'client_id' => $this->credentials->client()->id($this->cloud),
-            'client_secret' => $this->credentials->client()->secret($this->cloud),
+            'client_id' => $this->credentials->client()->id($this->cloudMock->name()),
+            'client_secret' => $this->credentials->client()->secret($this->cloudMock->name()),
             'grant_type' => 'client_credentials',
             'lifetime' => $this->credentials->ttl(),
         ];
@@ -159,7 +165,7 @@ class SessionTest extends TestCase
             ->with(m::on(function (Request $request) use ($requestBody) {
                 return (
                     $request->getMethod() === 'POST' &&
-                    (string) $request->getUri() === 'http://vaultid/oauth/client_token' &&
+                    (string) $request->getUri() === 'http://birdid/oauth/client_token' &&
                     $request->getData() === $requestBody
                 );
             }))
@@ -170,16 +176,12 @@ class SessionTest extends TestCase
             ->once()
             ->andReturn($body);
 
-        $expected = new ApplicationToken(
-            'some-token',
-            'some-type',
-            'VAULT_ID'
-        );
+        $expected = $this->applicationToken;
 
-        $this->assertEquals($expected, $session->applicationToken($this->credentials, $this->cloud));
+        $this->assertEquals($expected, $session->applicationToken($this->credentials, $this->cloudMock->name()));
     }
 
-    public function testUserDiscovery()
+    public function testOauthUserDiscovery()
     {
         $client = m::mock(HttpClient::class);
 
@@ -191,60 +193,45 @@ class SessionTest extends TestCase
             $client
         );
 
-        $clouds = new CloudAuthentication(
-            $this->credentials,
-            [
-                CloudAuthentication::CLOUD_NAME_VAULT_ID => new Cloud(
-                    CloudAuthentication::CLOUD_NAME_VAULT_ID,
-                    $manager->vaultIdUrl(),
-                    $this->applicationToken
-                ),
-                CloudAuthentication::CLOUD_NAME_BIRD_ID => new Cloud(
-                    CloudAuthentication::CLOUD_NAME_BIRD_ID,
-                    $manager->birdIdUrl(),
-                    $this->applicationToken
-                ),
-            ]);
-
-        $userDiscoveryData = [
-            'cloud' => 'VAULT_ID',
-            'name' => 'VAULT ID',
-            'username' => $this->credentials->username(),
-            'date_last_update' => '2020-03-17 18:45:00',
-            'certificates' => [
+        $discoveredOauthUserData = [
+            'status' => 'S',
+            'slots' => [
                 [
-                    'alias' => 'some-certificate',
-                    'certificate' => '-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----',
-                    'issuerDN' => 'some-dn'
+                    'slot_alias' => 'slot_alias_value',
+                    'label' => 'label_value'
                 ]
             ],
-            'detail' => [
-                'code' => 1109,
-                'status' => 'CERTIFICATES_LISTED',
-                'message' => 'Certificate Listing',
-            ]
+            'cloud' => $this->cloudMock->name()
         ];
 
-        $expected = UserDiscovery::create($userDiscoveryData);
+        $expected = DiscoveredOauthUser::create($discoveredOauthUserData);
 
         $response = m::mock(Response::class);
         $response->shouldReceive('getBody')
             ->once()
-            ->andReturn(json_encode($userDiscoveryData));
+            ->andReturn(json_encode($discoveredOauthUserData));
 
         $session = new Session($manager);
 
+        $requestBody = [
+            'client_id' => $this->credentials->client()->id($this->cloudMock->name()),
+            'client_secret' => $this->credentials->client()->secret($this->cloudMock->name()),
+            'user_cpf_cnpj' => CloudAuthentication::CLOUD_USER_DOCUMENT_TYPE,
+            'val_cpf_cnpj'  => 'username'
+        ];
+
         $client->shouldReceive('json')
-            ->with(m::on(function (Request $request) {
+            ->with(m::on(function (Request $request) use ($requestBody) {
                 return (
-                    $request->getMethod() === 'GET' &&
-                    (string) $request->getUri() === 'http://vaultid/user-discovery?document=username'
+                    $request->getMethod() === 'POST' &&
+                    (string) $request->getUri() === 'http://birdid/v0/oauth/user-discovery' &&
+                    $request->getData() === $requestBody
                 );
             }))
             ->once()
             ->andReturn($response);
 
-        $this->assertEquals($expected, $session->userDiscovery($clouds, $this->credentials->username()));
+        $this->assertEquals($expected, $session->oauthUserDiscovery($this->cloudMock, $this->credentials));
     }
 
     public function testUserDiscoveryByUserToken()

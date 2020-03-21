@@ -6,8 +6,10 @@ namespace Memed\Soluti\Auth;
 
 class CloudAuthentication
 {
-    public const CLOUD_NAME_VAULT_ID = 'VAULT_ID';
-    public const CLOUD_NAME_BIRD_ID = 'BIRD_ID';
+    public const CLOUD_NAME_VAULT_ID      = 'VAULT_ID';
+    public const CLOUD_NAME_BIRD_ID       = 'BIRD_ID';
+    public const CLOUD_USER_DISCOVERY_URL = '/v0/oauth/user-discovery';
+    public const CLOUD_USER_DOCUMENT_TYPE = 'cpf';
 
     private $credentials;
     private $clouds;
@@ -32,14 +34,29 @@ class CloudAuthentication
      * @param  array  $clouds
      * @throws \Exception
      */
-    private function setClouds(array $clouds): void
+    public function setClouds(array $clouds): void
     {
+        $this->clouds = [];
+
         foreach ($clouds as $cloud) {
             if (! $cloud instanceof Cloud) {
-                throw new \Exception('Nuven inválida.');
+                throw new \Exception('Nuvem inválida.');
             }
             $this->clouds[$cloud->name()] = $cloud;
         }
+    }
+
+    /**
+     * @param  array  $data
+     * @return static
+     * @throws \Exception
+     */
+    public static function create(array $data): self
+    {
+        return new self(
+            $data['credentials'],
+            $data['clouds']
+        );
     }
 
     /**
@@ -65,6 +82,20 @@ class CloudAuthentication
     public function hasClouds(): bool
     {
         return !empty($this->clouds());
+    }
+
+    /**
+     * @return Cloud
+     */
+    public function authenticatedCloud(): ?Cloud
+    {
+        foreach ($this->clouds() as $cloud) {
+            if ($cloud->discoveredOauthUser() && $cloud->discoveredOauthUser()->isValid()) {
+                return $cloud;
+            }
+        }
+
+        return null;
     }
 
     /**

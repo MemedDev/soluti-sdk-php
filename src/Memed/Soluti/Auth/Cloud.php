@@ -9,15 +9,18 @@ class Cloud
     private $name;
     private $url;
     private $applicationToken;
+    private $discoveredOauthUser;
 
     public function __construct(
         string $name,
         string $url,
-        ApplicationToken $applicationToken
+        ApplicationToken $applicationToken,
+        ?DiscoveredOauthUser $discoveredOauthUser = null
     ) {
         $this->name = $name;
         $this->url = $url;
         $this->applicationToken = $applicationToken;
+        $this->discoveredOauthUser = $discoveredOauthUser;
     }
 
     /**
@@ -44,5 +47,23 @@ class Cloud
     {
         return $this->applicationToken;
     }
+
+    /**
+     * @return DiscoveredOauthUser|null
+     */
+    public function discoveredOauthUser(): ?DiscoveredOauthUser
+    {
+        return $this->discoveredOauthUser;
+    }
+
+    /**
+     * @param  DiscoveredOauthUser|null  $discoveredOauthUser
+     */
+    public function setDiscoveredOauthUser(?DiscoveredOauthUser $discoveredOauthUser): void
+    {
+        $this->discoveredOauthUser = $discoveredOauthUser;
+    }
+
+
 
 }
