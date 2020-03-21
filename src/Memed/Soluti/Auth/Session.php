@@ -191,20 +191,20 @@ class Session
      *
      * @param  AuthStrategy  $token
      * @param  string|null  $document
-     * @return UserDiscovery|null
+     * @return UserDiscovery
      * @throws \Exception
      */
-    public function userDiscoveryByToken(AuthStrategy $token, ?string $document = null): ?UserDiscovery
+    public function userDiscoveryByToken(AuthStrategy $token, ?string $document = null): UserDiscovery
     {
         foreach ($this->cloudNames as $cloudName => $cloud) {
-            $discovery = $this->userDiscoveryRequest($token, $cloudName, $document);
-
-            if ($discovery->hasCertificate()) {
-                return $discovery;
+            try {
+                return $this->userDiscoveryRequest($token, $cloudName, $document);
+            } catch (\Exception $e) {
+                if ($e->getCode() === 401) {
+                    continue;
+                }
             }
         }
-
-        return null;
     }
 
     /**
