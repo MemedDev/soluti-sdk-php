@@ -7,7 +7,6 @@ namespace Memed\Soluti\Auth;
 use GuzzleHttp\Psr7\Response;
 use Memed\Soluti\Http\Request;
 use Memed\Soluti\Manager;
-use function Stringy\create;
 
 /**
  * This class is responsible for handling session on Soluti's service.
@@ -26,7 +25,7 @@ class Session
 
     protected $cloudNames = [
         CloudAuthentication::CLOUD_NAME_VAULT_ID => null,
-        CloudAuthentication::CLOUD_NAME_BIRD_ID  => null,
+        CloudAuthentication::CLOUD_NAME_BIRD_ID => null,
     ];
 
     /**
@@ -73,11 +72,10 @@ class Session
             );
 
             $response = $this->manager->client()->json($request);
-            $body = json_decode((string) $response->getBody(), true);
+            $body = json_decode((string)$response->getBody(), true);
 
             return new ApplicationToken($body['access_token'], $body['token_type'], $cloud);
-
-        } catch(\Exception $e) {
+        } catch (\Exception $e) {
             throw new \Exception($e->getMessage());
         }
     }
@@ -93,7 +91,7 @@ class Session
     {
         $payload = [
             'credentials' => $credentials,
-            'clouds'      => []
+            'clouds' => []
         ];
 
         foreach ($this->cloudNames as $cloudName => $cloud) {
@@ -142,28 +140,29 @@ class Session
     private function oauthUserDiscoveryRequest(
         Cloud $cloud,
         Credentials $credentials
-    ): DiscoveredOauthUser
-    {
+    ): DiscoveredOauthUser {
         $request = new Request(
             'post',
             $cloud->url(CloudAuthentication::CLOUD_USER_DISCOVERY_URL),
             [
-                'client_id'     => $credentials->client()->id($cloud->name()),
+                'client_id' => $credentials->client()->id($cloud->name()),
                 'client_secret' => $credentials->client()->secret($cloud->name()),
                 'user_cpf_cnpj' => CloudAuthentication::CLOUD_USER_DOCUMENT_TYPE,
-                'val_cpf_cnpj'  => $credentials->username()
+                'val_cpf_cnpj' => $credentials->username()
             ],
             [
-                'Authorization' => (string) $cloud->applicationToken(),
+                'Authorization' => (string)$cloud->applicationToken(),
             ]
         );
 
         $response = $this->manager->client()->json($request);
 
-        return DiscoveredOauthUser::create(array_merge(
-            ['cloud' => $cloud->name()],
-            json_decode((string) $response->getBody(), true)
-        ));
+        return DiscoveredOauthUser::create(
+            array_merge(
+                ['cloud' => $cloud->name()],
+                json_decode((string)$response->getBody(), true)
+            )
+        );
     }
 
     /**
@@ -179,7 +178,7 @@ class Session
         foreach ($cloudAuthentication->clouds() as $cloud) {
             $discovery = $this->userDiscoveryRequest($cloud->applicationToken(), $cloud->name(), $document);
 
-            if (! $discovery->hasCertificate()) {
+            if (!$discovery->hasCertificate()) {
                 continue;
             }
 
@@ -223,16 +222,20 @@ class Session
             ? "/user-discovery?document={$document}"
             : "/user-discovery";
 
-        $request = new Request('get', $this->cloudUrl($cloud, $endpoint), [], [
-            'Authorization' => (string) $token,
-        ]);
+        $request = new Request(
+            'get', $this->cloudUrl($cloud, $endpoint), [], [
+                     'Authorization' => (string)$token,
+                 ]
+        );
 
         $response = $this->manager->client()->json($request);
 
-        return UserDiscovery::create(array_merge(
-            ['cloud' => $cloud],
-            json_decode((string) $response->getBody(), true)
-        ));
+        return UserDiscovery::create(
+            array_merge(
+                ['cloud' => $cloud],
+                json_decode((string)$response->getBody(), true)
+            )
+        );
     }
 
     /**
@@ -268,7 +271,7 @@ class Session
      */
     protected function parseResponse(Response $response): Token
     {
-        $body = json_decode((string) $response->getBody(), true);
+        $body = json_decode((string)$response->getBody(), true);
 
         return new Token($body['access_token'], $body['token_type']);
     }

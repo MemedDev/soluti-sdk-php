@@ -9,14 +9,11 @@ use Memed\Soluti\Auth\Cloud;
 use Memed\Soluti\Auth\CloudAuthentication;
 use Memed\Soluti\Auth\Credentials;
 use Memed\Soluti\Auth\Session;
-use Memed\Soluti\Auth\Token;
 use Memed\Soluti\Auth\Token as AuthToken;
-use Memed\Soluti\Auth\UserDiscovery;
 use Memed\Soluti\Http\Client;
 use Memed\Soluti\Receiver\DocumentSet;
 use Memed\Soluti\Receiver\Downloader;
 use Memed\Soluti\Receiver\Receiver;
-use Memed\Soluti\TestCase;
 use Memed\Soluti\Transmitter\Token as TransactionToken;
 use Memed\Soluti\Transmitter\Transmitter;
 use Mockery as m;
@@ -122,7 +119,7 @@ class SignerTest extends TestCase
             ->andReturn($cloudAuthentication);
 
         $document = m::mock(Document::class);
-        $authToken = new Token(
+        $authToken = new AuthToken(
             'some-token',
             'some-type',
         );

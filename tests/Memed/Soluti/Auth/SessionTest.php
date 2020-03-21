@@ -15,7 +15,7 @@ use Mockery as m;
 class SessionTest extends TestCase
 {
     private $credentials;
-    private $birdidUrl  = 'http://birdid';
+    private $birdIdUrl  = 'http://birdid';
     private $vaultIdUrl = 'http://vaultid';
     private $applicationToken;
     private $userToken;
@@ -52,7 +52,7 @@ class SessionTest extends TestCase
 
         $this->cloudMock = m::mock(Cloud::class, [
             CloudAuthentication::CLOUD_NAME_BIRD_ID,
-            $this->birdidUrl,
+            $this->birdIdUrl,
             $this->applicationToken,
         ])
         ->makePartial();
@@ -100,7 +100,7 @@ class SessionTest extends TestCase
         $manager = new Manager(
             new Config([
                 'url_vaultid' => $this->vaultIdUrl,
-                'url_birdid' => $this->birdidUrl,
+                'url_birdid' => $this->birdIdUrl,
             ]),
             $client
         );
@@ -153,7 +153,7 @@ class SessionTest extends TestCase
         $manager = new Manager(
             new Config([
                 'url_vaultid' => $this->vaultIdUrl,
-                'url_birdid' => $this->birdidUrl,
+                'url_birdid' => $this->birdIdUrl,
             ]),
             $client
         );
@@ -188,7 +188,7 @@ class SessionTest extends TestCase
         $manager = new Manager(
             new Config([
                 'url_vaultid' => $this->vaultIdUrl,
-                'url_birdid' => $this->birdidUrl,
+                'url_birdid' => $this->birdIdUrl,
             ]),
             $client
         );
@@ -241,7 +241,7 @@ class SessionTest extends TestCase
         $manager = new Manager(
             new Config([
                 'url_vaultid' => $this->vaultIdUrl,
-                'url_birdid' => $this->birdidUrl,
+                'url_birdid' => $this->birdIdUrl,
             ]),
             $client
         );
@@ -294,7 +294,7 @@ class SessionTest extends TestCase
         $manager = new Manager(
             new Config([
                 'url_vaultid' => $this->vaultIdUrl,
-                'url_birdid' => $this->birdidUrl,
+                'url_birdid' => $this->birdIdUrl,
             ]),
             $client
         );
