@@ -32,7 +32,7 @@ class SessionTest extends TestCase
                 '12345',
                 'birdid-secret',
                 '12345',
-                'vaultid-secret',
+                'vaultid-secret'
             ),
             'username',
             'password',
@@ -41,7 +41,7 @@ class SessionTest extends TestCase
 
         $this->userToken = new Token(
             'some-token',
-            'some-type',
+            'some-type'
         );
 
         $this->applicationToken = new ApplicationToken(

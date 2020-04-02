@@ -107,8 +107,6 @@ class Session
 
             if ($authenticatedCloud->discoveredOauthUser()->isValid()) {
                 $payload['clouds'][$cloudName] = $authenticatedCloud;
-
-                return CloudAuthentication::create($payload);
             }
         }
 

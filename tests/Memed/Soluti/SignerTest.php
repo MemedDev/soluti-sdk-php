@@ -77,7 +77,7 @@ class SignerTest extends TestCase
                 '12345',
                 'birdid-secret',
                 '12345',
-                'vaultid-secret',
+                'vaultid-secret'
             ),
             'username',
             'password',
@@ -99,8 +99,15 @@ class SignerTest extends TestCase
         $applicationToken = new ApplicationToken(
             'some-token',
             'some-type',
-            CloudAuthentication::CLOUD_NAME_BIRD_ID,
+            CloudAuthentication::CLOUD_NAME_BIRD_ID
         );
+
+        $failCloudMock = m::mock(Cloud::class, [
+            CloudAuthentication::CLOUD_NAME_VAULT_ID,
+            'http://vaultid',
+            $applicationToken,
+        ])
+            ->makePartial();
 
         $cloudMock = m::mock(Cloud::class, [
             CloudAuthentication::CLOUD_NAME_BIRD_ID,
@@ -110,8 +117,8 @@ class SignerTest extends TestCase
             ->makePartial();
 
         $cloudAuthentication = m::mock(CloudAuthentication::class);
-        $cloudAuthentication->shouldReceive('authenticatedCloud')
-            ->andReturn($cloudMock);
+        $cloudAuthentication->shouldReceive('authenticatedClouds')
+            ->andReturn([$failCloudMock, $cloudMock]);
 
         $session->shouldReceive('cloudAuthentication')
             ->with($credentials)
@@ -121,7 +128,7 @@ class SignerTest extends TestCase
         $document = m::mock(Document::class);
         $authToken = new AuthToken(
             'some-token',
-            'some-type',
+            'some-type'
         );
         $destination = 'some/destination/directory/';
 
@@ -132,6 +139,11 @@ class SignerTest extends TestCase
             'some/destination/directory/file_2.pdf',
             'some/destination/directory/file_3.pdf',
         ];
+
+        $session->shouldReceive('create')
+            ->with($credentials, $failCloudMock)
+            ->once()
+            ->andThrow('\Exception', 'message', 123456789);
 
         $session->shouldReceive('create')
             ->with($credentials, $cloudMock)

@@ -87,15 +87,17 @@ class CloudAuthentication
     /**
      * @return Cloud
      */
-    public function authenticatedCloud(): ?Cloud
+    public function authenticatedClouds(): array
     {
+        $authenticatedClouds = [];
+
         foreach ($this->clouds() as $cloud) {
             if ($cloud->discoveredOauthUser() && $cloud->discoveredOauthUser()->isValid()) {
-                return $cloud;
+                $authenticatedClouds[] = $cloud;
             }
         }
 
-        return null;
+        return $authenticatedClouds;
     }
 
     /**

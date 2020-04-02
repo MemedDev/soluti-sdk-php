@@ -49,15 +49,31 @@ class Signer
                 ->session()
                 ->cloudAuthentication($credentials);
 
-            if (! $cloudAuthentication->authenticatedCloud()) {
+            if (empty($cloudAuthentication->authenticatedClouds())) {
                 throw new \Exception(
                     "Usuário [{$credentials->username()}] não encontrado na nuvem da Soluti."
                 );
             }
 
-            $token = $this->manager
-                ->session()
-                ->create($credentials, $cloudAuthentication->authenticatedCloud());
+            foreach ($cloudAuthentication->authenticatedClouds() as $cloud) {
+                try {
+                    $token = $this->manager
+                        ->session()
+                        ->create($credentials, $cloud);
+                } catch (\Exception $e) {
+                    // Silent fail
+                }
+
+                if ($token && ! $token instanceof Credentials) {
+                    break;
+                }
+            }
+        }
+
+        if (! $token || $token instanceof Credentials) {
+            throw new \Exception(
+                "Não foi possível autenticar o usuário [{$credentials->username()}] na Soluti."
+            );
         }
 
         $transactionToken = $this->manager

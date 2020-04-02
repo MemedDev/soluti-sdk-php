@@ -22,7 +22,7 @@ class CloudAuthenticationTest extends TestCase
                 '12345',
                 'birdid-secret',
                 '12345',
-                'vaultid-secret',
+                'vaultid-secret'
             ),
             'username',
             'password',
