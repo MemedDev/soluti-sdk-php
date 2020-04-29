@@ -28,8 +28,10 @@ class Receiver
      * Retrieves a set of parsed documents for given token transaction. It
      * attempts to get these documents sometimes because signature service
      * may have a delay to sign them.
+     *
+     * @throws \Exception
      */
-    public function getDocuments(Token $token, int $maxAttempts = 5, int $delay = 1): DocumentSet
+    public function getDocuments(Token $token, int $maxAttempts = 150, int $delay = 2): DocumentSet
     {
         $attempts = 0;
 
@@ -38,6 +40,10 @@ class Receiver
             $attempts++;
             sleep($delay);
         } while ($documentSet->isWaiting() && $attempts < $maxAttempts);
+
+        if ($documentSet->isWaiting() && $attempts === $maxAttempts) {
+            throw new \Exception('Tempo limite para a assinatura dos documentos ultrapassado.');
+        }
 
         return $documentSet;
     }
