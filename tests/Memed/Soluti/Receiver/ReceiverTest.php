@@ -103,7 +103,7 @@ class ReceiverTest extends TestCase
         $this->assertEquals($expected, $receiver->getDocuments($token, 5, 0));
     }
 
-    public function testGetDocumentsShouldReturnWaitingDocumentSetAfterAllAttempts()
+    public function testGetDocumentsShouldThrowExceptionAfterAllAttempts()
     {
         $cessUrl = 'http://cess';
         $client = m::mock(Client::class);
@@ -135,6 +135,45 @@ class ReceiverTest extends TestCase
             new Document('WAITING', null),
         ]);
 
-        $this->assertEquals($expected, $receiver->getDocuments($token, 3, 0));
+        $this->expectException(\Exception::class);
+
+        $receiver->getDocuments($token, 3, 0);
+    }
+
+    public function testGetDocumentsShouldThrowExceptionWhenDocumentStatusIsError()
+    {
+        $cessUrl = 'http://cess';
+        $client = m::mock(Client::class);
+        $manager = new Manager(new Config(['url_cess' => $cessUrl]), $client);
+        $receiver = new Receiver($manager);
+        $token = new Token('some-token', 'some-alias');
+        $response = m::mock(Response::class);
+
+        $body = json_encode([
+            'documents' => [
+                ['status' => 'ERROR'],
+                ['status' => 'WAITING'],
+            ],
+        ]);
+
+        $client->shouldReceive('get')
+            ->with(m::on(function (Request $request) {
+                return (string) $request->getUri() === 'http://cess/signature-service/some-token';
+            }))
+            ->times(1)
+            ->andReturn($response);
+
+        $response->shouldReceive('getBody')
+            ->times(1)
+            ->andReturn($body);
+
+        $expected = new DocumentSet([
+            new Document('ERROR', null),
+            new Document('WAITING', null),
+        ]);
+
+        $this->expectException(\Exception::class);
+
+        $receiver->getDocuments($token, 3, 0);
     }
 }
