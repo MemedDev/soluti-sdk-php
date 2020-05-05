@@ -6,6 +6,7 @@ namespace Memed\Soluti\Receiver;
 
 class Document
 {
+    public const STATUS_ERROR = 'ERROR';
     public const STATUS_SIGNED = 'SIGNED';
 
     /**
@@ -25,6 +26,14 @@ class Document
     {
         $this->status = $status;
         $this->location = $location;
+    }
+
+    /**
+     * Checks if an error was find when processing the document.
+     */
+    public function hasError(): bool
+    {
+        return $this->status === static::STATUS_ERROR;
     }
 
     /**

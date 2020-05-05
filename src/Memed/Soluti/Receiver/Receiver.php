@@ -39,6 +39,10 @@ class Receiver
             $documentSet = $this->parseReponse($this->request($token));
             $attempts++;
             sleep($delay);
+
+            if ($documentSet->hasError()) {
+                throw new \Exception('Erro ao baixar o PDF assinado.');
+            }
         } while ($documentSet->isWaiting() && $attempts < $maxAttempts);
 
         if ($documentSet->isWaiting() && $attempts === $maxAttempts) {
