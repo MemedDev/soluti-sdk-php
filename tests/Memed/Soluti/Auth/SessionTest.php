@@ -247,47 +247,332 @@ class SessionTest extends TestCase
         );
 
         $userDiscoveryData = [
-            'cloud' => 'VAULT_ID',
-            'name' => 'VAULT ID',
-            'username' => $this->credentials->username(),
-            'date_last_update' => '2020-03-17 18:45:00',
-            'certificates' => [
-                [
-                    'alias' => 'some-certificate',
-                    'certificate' => '-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----',
-                    'issuerDN' => 'some-dn'
+            'VAULT_ID' => [
+                'cloud' => 'VAULT_ID',
+                'name' => 'VAULT ID',
+                'username' => $this->credentials->username(),
+                'date_last_update' => '2020-03-17 18:45:00',
+                'certificates' => [
+                    [
+                        'alias' => 'some-certificate',
+                        'certificate' => '-----CERTIFICATE-CONTENT-----',
+                        'issuerDN' => 'some-dn'
+                    ]
+                ],
+                'detail' => [
+                    'code' => 1109,
+                    'status' => 'CERTIFICATES_LISTED',
+                    'message' => 'Certificate Listing',
                 ]
             ],
-            'detail' => [
-                'code' => 1109,
-                'status' => 'CERTIFICATES_LISTED',
-                'message' => 'Certificate Listing',
-            ]
+            'BIRD_ID' => [
+                'cloud' => 'BIRD_ID',
+                'name' => 'BIRD ID',
+                'username' => $this->credentials->username(),
+                'date_last_update' => '2020-03-17 18:45:00',
+                'certificates' => [
+                    [
+                        'alias' => 'some-certificate',
+                        'certificate' => '-----CERTIFICATE-CONTENT-----',
+                        'issuerDN' => 'some-dn'
+                    ]
+                ],
+                'detail' => [
+                    'code' => 1109,
+                    'status' => 'CERTIFICATES_LISTED',
+                    'message' => 'Certificate Listing',
+                ]
+            ],
         ];
 
-        $expected = UserDiscovery::create($userDiscoveryData);
+        $userDiscovery = [
+            'VAULT_ID' => UserDiscovery::create($userDiscoveryData['VAULT_ID']),
+            'BIRD_ID' => UserDiscovery::create($userDiscoveryData['BIRD_ID']),
+        ];
 
-        $response = m::mock(Response::class);
-        $response->shouldReceive('getBody')
-            ->once()
-            ->andReturn(json_encode($userDiscoveryData));
+        $userDiscoveryByTokenExpected = new UserDiscoveryByToken([
+            CloudAuthentication::CLOUD_NAME_VAULT_ID => null,
+            CloudAuthentication::CLOUD_NAME_BIRD_ID => null,
+        ]);
+
+        $userDiscoveryByTokenExpected->addData($userDiscovery['VAULT_ID']);
+        $userDiscoveryByTokenExpected->addData($userDiscovery['BIRD_ID']);
 
         $session = new Session($manager);
+        $response = m::mock(Response::class);
 
         $client->shouldReceive('json')
-            ->with(m::on(function (Request $request) {
-                return (
-                    $request->getMethod() === 'GET' &&
-                    (string) $request->getUri() === 'http://vaultid/user-discovery'
-                );
+            ->with(m::on(function (Request $request) use ($response, $userDiscoveryData) {
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://vaultid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andReturn(json_encode($userDiscoveryData['VAULT_ID']));
+
+                    return true;
+                }
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://birdid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andReturn(json_encode($userDiscoveryData['BIRD_ID']));
+
+                    return true;
+                }
             }))
-            ->once()
             ->andReturn($response);
 
-        $this->assertEquals($expected, $session->userDiscoveryByToken($this->userToken));
+        $userDiscoveryByToken = $session->userDiscoveryByToken($this->userToken);
+
+        $this->assertEquals($userDiscoveryByTokenExpected, $userDiscoveryByToken);
+        $this->assertTrue($userDiscoveryByToken->isAuthorized());
+        $this->assertTrue($userDiscoveryByToken->isCertified());
     }
 
     public function testUserDiscoveryByApplicationToken()
+    {
+        $client = m::mock(HttpClient::class);
+
+        $manager = new Manager(
+            new Config([
+                'url_vaultid' => $this->vaultIdUrl,
+                'url_birdid' => $this->birdIdUrl,
+            ]),
+            $client
+        );
+
+        $userDiscoveryData = [
+            'VAULT_ID' => [
+                'cloud' => 'VAULT_ID',
+                'name' => 'VAULT ID',
+                'username' => $this->credentials->username(),
+                'date_last_update' => '2020-03-17 18:45:00',
+                'certificates' => [
+                    [
+                        'alias' => 'some-certificate',
+                        'certificate' => '-----CERTIFICATE-CONTENT-----',
+                        'issuerDN' => 'some-dn'
+                    ]
+                ],
+                'detail' => [
+                    'code' => 1109,
+                    'status' => 'CERTIFICATES_LISTED',
+                    'message' => 'Certificate Listing',
+                ]
+            ],
+            'BIRD_ID' => [
+                'cloud' => 'BIRD_ID',
+                'name' => 'BIRD ID',
+                'username' => $this->credentials->username(),
+                'date_last_update' => '2020-03-17 18:45:00',
+                'certificates' => [
+                    [
+                        'alias' => 'some-certificate',
+                        'certificate' => '-----CERTIFICATE-CONTENT-----',
+                        'issuerDN' => 'some-dn'
+                    ]
+                ],
+                'detail' => [
+                    'code' => 1109,
+                    'status' => 'CERTIFICATES_LISTED',
+                    'message' => 'Certificate Listing',
+                ]
+            ],
+        ];
+
+        $userDiscovery = [
+            'VAULT_ID' => UserDiscovery::create($userDiscoveryData['VAULT_ID']),
+            'BIRD_ID' => UserDiscovery::create($userDiscoveryData['BIRD_ID']),
+        ];
+
+        $userDiscoveryByTokenExpected = new UserDiscoveryByToken([
+            CloudAuthentication::CLOUD_NAME_VAULT_ID => null,
+            CloudAuthentication::CLOUD_NAME_BIRD_ID => null,
+        ]);
+
+        $userDiscoveryByTokenExpected->addData($userDiscovery['VAULT_ID']);
+        $userDiscoveryByTokenExpected->addData($userDiscovery['BIRD_ID']);
+
+        $session = new Session($manager);
+        $response = m::mock(Response::class);
+
+        $client->shouldReceive('json')
+            ->with(m::on(function (Request $request) use ($response, $userDiscoveryData) {
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://vaultid/user-discovery?document=username') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andReturn(json_encode($userDiscoveryData['VAULT_ID']));
+
+                    return true;
+                }
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://birdid/user-discovery?document=username') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andReturn(json_encode($userDiscoveryData['BIRD_ID']));
+
+                    return true;
+                }
+            }))
+            ->andReturn($response);
+
+        $userDiscoveryByToken = $session->userDiscoveryByToken($this->applicationToken, $this->credentials->username());
+
+        $this->assertEquals($userDiscoveryByTokenExpected, $userDiscoveryByToken);
+        $this->assertTrue($userDiscoveryByToken->isAuthorized());
+        $this->assertTrue($userDiscoveryByToken->isCertified());
+    }
+
+    public function testUserDiscoveryByUnauthorizedUserToken()
+    {
+        $client = m::mock(HttpClient::class);
+
+        $manager = new Manager(
+            new Config([
+                'url_vaultid' => $this->vaultIdUrl,
+                'url_birdid' => $this->birdIdUrl,
+            ]),
+            $client
+        );
+
+        $userDiscoveryByTokenExpected = new UserDiscoveryByToken([
+            CloudAuthentication::CLOUD_NAME_VAULT_ID => null,
+            CloudAuthentication::CLOUD_NAME_BIRD_ID => null,
+        ]);
+
+        $userDiscoveryByTokenExpected->addError([
+            'code' => 401,
+            'cloud' => 'VAULT_ID',
+            'message' => 'Client error: `GET https://apicloudid.hom.vaultid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+        ]);
+
+        $userDiscoveryByTokenExpected->addError([
+            'code' => 401,
+            'cloud' => 'BIRD_ID',
+            'message' => 'Client error: `GET https://apihom.birdid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+        ]);
+
+        $session = new Session($manager);
+        $response = m::mock(Response::class);
+
+        $client->shouldReceive('json')
+            ->with(m::on(function (Request $request) use ($response) {
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://vaultid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andThrow(new \Exception(
+                            'Client error: `GET https://apicloudid.hom.vaultid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+                            401
+                        ));
+
+                    return true;
+                }
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://birdid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andThrow(new \Exception(
+                            'Client error: `GET https://apihom.birdid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+                            401
+                        ));
+
+                    return true;
+                }
+            }))
+            ->andReturn($response);
+
+        $userDiscoveryByToken = $session->userDiscoveryByToken($this->userToken);
+
+        $this->assertEquals($userDiscoveryByTokenExpected, $userDiscoveryByToken);
+        $this->assertFalse($userDiscoveryByToken->isAuthorized());
+        $this->assertFalse($userDiscoveryByToken->isCertified());
+    }
+
+    public function testUserDiscoveryByBirdIdAuthorizedUserToken()
+    {
+        $client = m::mock(HttpClient::class);
+
+        $manager = new Manager(
+            new Config([
+                'url_vaultid' => $this->vaultIdUrl,
+                'url_birdid' => $this->birdIdUrl,
+            ]),
+            $client
+        );
+
+        $userDiscoveryData = [
+            'BIRD_ID' => [
+                'cloud' => 'BIRD_ID',
+                'name' => 'BIRD ID',
+                'username' => $this->credentials->username(),
+                'date_last_update' => '2020-03-17 18:45:00',
+                'certificates' => [
+                    [
+                        'alias' => 'some-certificate',
+                        'certificate' => '-----CERTIFICATE-CONTENT-----',
+                        'issuerDN' => 'some-dn'
+                    ]
+                ],
+                'detail' => [
+                    'code' => 1109,
+                    'status' => 'CERTIFICATES_LISTED',
+                    'message' => 'Certificate Listing',
+                ]
+            ],
+        ];
+
+        $userDiscovery = [
+            'BIRD_ID' => UserDiscovery::create($userDiscoveryData['BIRD_ID']),
+        ];
+
+        $userDiscoveryByTokenExpected = new UserDiscoveryByToken([
+            CloudAuthentication::CLOUD_NAME_VAULT_ID => null,
+            CloudAuthentication::CLOUD_NAME_BIRD_ID => null,
+        ]);
+
+        $userDiscoveryByTokenExpected->addData($userDiscovery['BIRD_ID']);
+
+        $userDiscoveryByTokenExpected->addError([
+            'code' => 401,
+            'cloud' => 'VAULT_ID',
+            'message' => 'Client error: `GET https://apicloudid.hom.vaultid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+        ]);
+
+        $session = new Session($manager);
+        $response = m::mock(Response::class);
+
+        $client->shouldReceive('json')
+            ->with(m::on(function (Request $request) use ($response, $userDiscoveryData) {
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://vaultid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andThrow(new \Exception(
+                            'Client error: `GET https://apicloudid.hom.vaultid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+                            401
+                        ));
+
+                    return true;
+                }
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://birdid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andReturn(json_encode($userDiscoveryData['BIRD_ID']));
+
+                    return true;
+                }
+            }))
+            ->andReturn($response);
+
+        $userDiscoveryByToken = $session->userDiscoveryByToken($this->userToken);
+
+        $this->assertEquals($userDiscoveryByTokenExpected, $userDiscoveryByToken);
+        $this->assertTrue($userDiscoveryByToken->isAuthorized());
+        $this->assertTrue($userDiscoveryByToken->isCertified());
+    }
+
+    public function testUserDiscoveryByVaultIdAuthorizedUserToken()
     {
         $client = m::mock(HttpClient::class);
 
@@ -307,7 +592,7 @@ class SessionTest extends TestCase
             'certificates' => [
                 [
                     'alias' => 'some-certificate',
-                    'certificate' => '-----BEGIN CERTIFICATE-----\n-----END CERTIFICATE-----',
+                    'certificate' => '-----CERTIFICATE-CONTENT-----',
                     'issuerDN' => 'some-dn'
                 ]
             ],
@@ -318,25 +603,126 @@ class SessionTest extends TestCase
             ]
         ];
 
-        $expected = UserDiscovery::create($userDiscoveryData);
+        $userDiscovery = UserDiscovery::create($userDiscoveryData);
 
-        $response = m::mock(Response::class);
-        $response->shouldReceive('getBody')
-            ->once()
-            ->andReturn(json_encode($userDiscoveryData));
+        $userDiscoveryByTokenExpected = new UserDiscoveryByToken([
+            CloudAuthentication::CLOUD_NAME_VAULT_ID => null,
+            CloudAuthentication::CLOUD_NAME_BIRD_ID => null,
+        ]);
+
+        $userDiscoveryByTokenExpected->addData($userDiscovery);
+
+        $userDiscoveryByTokenExpected->addError([
+            'code' => 401,
+            'cloud' => 'BIRD_ID',
+            'message' => 'Client error: `GET https://apihom.birdid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+        ]);
 
         $session = new Session($manager);
+        $response = m::mock(Response::class);
 
         $client->shouldReceive('json')
-            ->with(m::on(function (Request $request) {
-                return (
-                    $request->getMethod() === 'GET' &&
-                    (string) $request->getUri() === 'http://vaultid/user-discovery?document=username'
-                );
+            ->with(m::on(function (Request $request) use ($response, $userDiscoveryData) {
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://vaultid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andReturn(json_encode($userDiscoveryData));
+
+                    return true;
+                }
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://birdid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andThrow(new \Exception(
+                            'Client error: `GET https://apihom.birdid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+                            401
+                        ));
+
+                    return true;
+                }
             }))
-            ->once()
             ->andReturn($response);
 
-        $this->assertEquals($expected, $session->userDiscoveryByToken($this->applicationToken, $this->credentials->username()));
+        $userDiscoveryByToken = $session->userDiscoveryByToken($this->userToken);
+
+        $this->assertEquals($userDiscoveryByTokenExpected, $userDiscoveryByToken);
+        $this->assertTrue($userDiscoveryByToken->isAuthorized());
+        $this->assertTrue($userDiscoveryByToken->isCertified());
+    }
+
+    public function testUserDiscoveryByVaultIdAuthorizedUserTokenWithoutCertificate()
+    {
+        $client = m::mock(HttpClient::class);
+
+        $manager = new Manager(
+            new Config([
+                'url_vaultid' => $this->vaultIdUrl,
+                'url_birdid' => $this->birdIdUrl,
+            ]),
+            $client
+        );
+
+        $userDiscoveryData = [
+            'cloud' => 'VAULT_ID',
+            'name' => 'VAULT ID',
+            'username' => $this->credentials->username(),
+            'date_last_update' => '2020-03-17 18:45:00',
+            'certificates' => [],
+            'detail' => [
+                'code' => 1110,
+                'status' => 'NO_CERTIFICATE_FOUND',
+                'message' => 'No certificate found.',
+            ]
+        ];
+
+        $userDiscovery = UserDiscovery::create($userDiscoveryData);
+
+        $userDiscoveryByTokenExpected = new UserDiscoveryByToken([
+            CloudAuthentication::CLOUD_NAME_VAULT_ID => null,
+            CloudAuthentication::CLOUD_NAME_BIRD_ID => null,
+        ]);
+
+        $userDiscoveryByTokenExpected->addData($userDiscovery);
+
+        $userDiscoveryByTokenExpected->addError([
+            'code' => 401,
+            'cloud' => 'BIRD_ID',
+            'message' => 'Client error: `GET https://apihom.birdid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+        ]);
+
+        $session = new Session($manager);
+        $response = m::mock(Response::class);
+
+        $client->shouldReceive('json')
+            ->with(m::on(function (Request $request) use ($response, $userDiscoveryData) {
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://vaultid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andReturn(json_encode($userDiscoveryData));
+
+                    return true;
+                }
+
+                if ($request->getMethod() === 'GET' && (string) $request->getUri() === 'http://birdid/user-discovery') {
+                    $response->shouldReceive('getBody')
+                        ->once()
+                        ->andThrow(new \Exception(
+                            'Client error: `GET https://apihom.birdid.com.br/user-discovery` resulted in a `401 Unauthorized` response',
+                            401
+                        ));
+
+                    return true;
+                }
+            }))
+            ->andReturn($response);
+
+        $userDiscoveryByToken = $session->userDiscoveryByToken($this->userToken);
+
+        $this->assertEquals($userDiscoveryByTokenExpected, $userDiscoveryByToken);
+        $this->assertTrue($userDiscoveryByToken->isAuthorized());
+        $this->assertFalse($userDiscoveryByToken->isCertified());
     }
 }

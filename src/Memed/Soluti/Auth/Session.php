@@ -187,22 +187,35 @@ class Session
     /**
      * Check which in cloud the user has certificate
      *
-     * @param  AuthStrategy  $token
-     * @param  string|null  $document
-     * @return UserDiscovery
-     * @throws \Exception
+     * @param AuthStrategy $token
+     * @param string|null $document
+     * @return UserDiscoveryByToken
      */
-    public function userDiscoveryByToken(AuthStrategy $token, ?string $document = null): UserDiscovery
-    {
+    public function userDiscoveryByToken(
+        AuthStrategy $token,
+        ?string $document = null
+    ): UserDiscoveryByToken {
+        $userDiscoveryByToken = new UserDiscoveryByToken($this->cloudNames);
+
         foreach ($this->cloudNames as $cloudName => $cloud) {
             try {
-                return $this->userDiscoveryRequest($token, $cloudName, $document);
+                $userDiscoveryByToken->addData(
+                    $this->userDiscoveryRequest($token, $cloudName, $document)
+                );
             } catch (\Exception $e) {
+                $userDiscoveryByToken->addError([
+                    'code' => $e->getCode(),
+                    'cloud' => $cloudName,
+                    'message' => $e->getMessage()
+                ]);
+
                 if ($e->getCode() === 401) {
                     continue;
                 }
             }
         }
+
+        return $userDiscoveryByToken;
     }
 
     /**
