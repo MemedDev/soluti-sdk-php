@@ -6,7 +6,9 @@ namespace Memed\Soluti\Http;
 
 use BadMethodCallException;
 use GuzzleHttp\Client as GuzzleClient;
+use GuzzleHttp\Cookie\CookieJar;
 use GuzzleHttp\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 
 /**
  * This class is responsible for abstracting common actions and informations
@@ -74,7 +76,7 @@ class Client
     /**
      * Triggers a request to guzzle.
      */
-    private function send(Request $request, string $type): Response
+    private function send(Request $request, string $type): ResponseInterface
     {
         return $this->guzzle->request(
             $request->getMethod(),
@@ -84,5 +86,13 @@ class Client
                 $type => $request->getData(),
             ]
         );
+    }
+
+    /**
+     * @return CookieJar
+     */
+    public function getCookies(): CookieJar
+    {
+        return $this->guzzle->getConfig('cookies');
     }
 }

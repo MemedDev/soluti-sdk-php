@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Memed\Soluti;
 
-use Memed\Soluti\Auth\AuthStrategy;
-use Memed\Soluti\Auth\Cloud;
+use App\Memed\DigitalSignature\Contracts\SignatureOptionsContract;
+use GuzzleHttp\Psr7\Response;
 use Memed\Soluti\Auth\CloudAuthentication;
-use Memed\Soluti\Auth\Credentials;
-use Memed\Soluti\Auth\UserDiscovery;
+use Memed\Soluti\Dto\SignableDocumentSet;
+use Memed\Soluti\Dto\SignaturePayload;
+use Memed\Soluti\Dto\SignatureResponse;
+use Memed\Soluti\Dto\SignedDocumentSet;
+use Memed\Soluti\Http\Request;
 
 class Signer
 {
@@ -29,77 +32,53 @@ class Signer
      * Sends given document object to be signed in Soluti service using given
      * strategy.
      *
-     * @param  Document  $document
-     * @param  AuthStrategy  $token
-     * @param  string  $destinationPath
-     * @return array
-     * @throws \Exception
-     * @see Memed\Soluti\Auth\AuthStrategy
+     * @param SignatureOptionsContract $signatureOptions
+     * @param SignableDocumentSet      $signableDocumentSet
+     * @return SignatureResponse
      */
     public function sign(
-        Document $document,
-        AuthStrategy $token,
-        string $destinationPath
-    ): array {
-
-        if ($token instanceof Credentials) {
-            $credentials = $token;
-
-            $cloudAuthentication = $this->manager
-                ->session()
-                ->cloudAuthentication($credentials);
-
-            if (empty($cloudAuthentication->authenticatedClouds())) {
-                throw new \Exception(
-                    "Usuário [{$credentials->username()}] não encontrado na nuvem da Soluti."
-                );
-            }
-
-            foreach ($cloudAuthentication->authenticatedClouds() as $cloud) {
-                try {
-                    $token = $this->manager
-                        ->session()
-                        ->create($credentials, $cloud);
-                } catch (\Exception $e) {
-                    // Silent fail
-                }
-
-                if ($token && ! $token instanceof Credentials) {
-                    break;
-                }
-            }
+        SignatureOptionsContract $signatureOptions,
+        SignableDocumentSet $signableDocumentSet
+    ): SignatureResponse {
+        $documents = [];
+        foreach ($signableDocumentSet as $key => $signableDocument) {
+            $documents[$key] = $signableDocument->toArray();
         }
 
-        if (! $token || $token instanceof Credentials) {
-            throw new \Exception(
-                "Não foi possível autenticar o usuário [{$credentials->username()}] na Soluti."
-            );
-        }
+        $payload = SignaturePayload::create(
+            [
+                'certificate_alias' => $signatureOptions->getCertificateAlias(),
+                'signature_settings' => $signatureOptions->signatureSettings(),
+                'documents' => $documents,
+            ]
+        );
 
-        $transactionToken = $this->manager
-            ->transmitter()
-            ->transmit($document, $token);
+        $request = new Request(
+            'post',
+            $this->manager->cessUrl(CloudAuthentication::CESS_SIGNATURE_SERVICE_URL),
+            $payload->toArray(),
+            [
+                'Authorization' => $signatureOptions->getSignToken()->toVCSchema(),
+            ]
+        );
 
-        $documents = $this->manager
-            ->receiver()
-            ->getDocuments($transactionToken);
-
-        return $this->manager
-            ->downloader()
-            ->download($documents, $destinationPath);
+        return $this->getResponse($this->manager->client()->json($request));
     }
 
-    /**
-     * Get UserDiscovery instance
-     *
-     * @param  Credentials  $credentials
-     * @return UserDiscovery
-     * @throws \Exception
-     */
-    private function getUserDiscovery(Credentials $credentials): UserDiscovery
+    public function getResponse(Response $response): SignatureResponse
     {
-        $clouds = $this->manager->session()->cloudAuthentication($credentials);
+        $responseData = json_decode((string) $response->getBody(), true);
+        $responseData['documents'] = SignedDocumentSet::create($responseData['documents']);
+        $responseData['transaction-cookie'] = $this->manager
+            ->client()
+            ->getCookies()
+            ->getCookieByName(
+                config(
+                    'signature.providers.soluti.transaction-cookie',
+                    'default'
+                )
+            );
 
-        return $this->manager->session()->userDiscovery($clouds, $credentials->username());
+        return SignatureResponse::create($responseData);
     }
 }

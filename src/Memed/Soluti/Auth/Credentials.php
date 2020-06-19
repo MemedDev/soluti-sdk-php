@@ -80,4 +80,12 @@ class Credentials implements AuthStrategy
     {
         return $this->ttl;
     }
+
+    /**
+     * Retrieves time (in hours) that credentials will be valid.
+     */
+    public function ttlInHours(): int
+    {
+        return $this->ttl/60/60;
+    }
 }

@@ -6,10 +6,14 @@ namespace Memed\Soluti\Auth;
 
 class CloudAuthentication
 {
-    public const CLOUD_NAME_VAULT_ID      = 'VAULT_ID';
-    public const CLOUD_NAME_BIRD_ID       = 'BIRD_ID';
-    public const CLOUD_USER_DISCOVERY_URL = '/v0/oauth/user-discovery';
-    public const CLOUD_USER_DOCUMENT_TYPE = 'cpf';
+    public const CESS_CERTIFICATE_SERVICE_URL    = '/certificate-service';
+    public const CESS_SIGNATURE_SERVICE_URL      = '/signature-service';
+    public const CLOUD_NAME_BIRD_ID              = 'BIRDID';
+    public const CLOUD_NAME_VAULT_ID             = 'VAULTID';
+    public const CLOUD_CERTIFICATE_DISCOVERY_URL = '/v0/oauth/certificate-discovery';
+    public const CLOUD_PWD_AUTHORIZE_URL         = '/v0/oauth/pwd_authorize';
+    public const CLOUD_USER_DISCOVERY_URL        = '/v0/oauth/user-discovery';
+    public const CLOUD_USER_DOCUMENT_TYPE        = 'cpf';
 
     private $credentials;
     private $clouds;
@@ -85,7 +89,7 @@ class CloudAuthentication
     }
 
     /**
-     * @return Cloud
+     * @return array
      */
     public function authenticatedClouds(): array
     {
